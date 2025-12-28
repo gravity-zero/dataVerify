@@ -1,0 +1,18 @@
+# IDE
+.idea/
+.vscode/
+
+# Dependencies
+vendor/
+
+# Testing
+.phpunit.cache/
+coverage/
+
+# Logs
+*.log
+infection.log
+
+# OS
+.DS_Store
+Thumbs.db

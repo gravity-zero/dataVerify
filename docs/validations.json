@@ -1,0 +1,385 @@
+{
+    "required": {
+        "name": "required",
+        "description": "Validates that a field is not empty. Objects are cast to arrays to check emptiness.",
+        "category": "Core",
+        "examples": [
+            "$verifier->field(\"test\")->required"
+        ],
+        "parameters": []
+    },
+    "string": {
+        "name": "string",
+        "description": "Validates that a value is a string",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->string"
+        ],
+        "parameters": []
+    },
+    "int": {
+        "name": "int",
+        "description": "Validates that a value is an integer. In strict mode (default), only true integers are accepted",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->int(true)"
+        ],
+        "parameters": [
+            {
+                "name": "strict",
+                "type": "bool",
+                "required": false,
+                "default": true,
+                "description": "Strict mode: true for integers only",
+                "example": true
+            }
+        ]
+    },
+    "array": {
+        "name": "array",
+        "description": "Validates that a value is an array",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->array"
+        ],
+        "parameters": []
+    },
+    "object": {
+        "name": "object",
+        "description": "Validates that a value is an object",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->object"
+        ],
+        "parameters": []
+    },
+    "between": {
+        "name": "between",
+        "description": "Validates that a value is between two bounds. Supports numeric values and DateTime objects",
+        "category": "Numeric",
+        "examples": [
+            "$verifier->field(\"test\")->between(18, 65)"
+        ],
+        "parameters": [
+            {
+                "name": "min",
+                "type": "DateTime|string|int|float",
+                "required": true,
+                "default": null,
+                "description": "Minimum value (inclusive)",
+                "example": 18
+            },
+            {
+                "name": "max",
+                "type": "DateTime|string|int|float",
+                "required": true,
+                "default": null,
+                "description": "Maximum value (inclusive)",
+                "example": 65
+            }
+        ]
+    },
+    "date": {
+        "name": "date",
+        "description": "Validates that a value is a valid date in the specified format. Performs strict validation",
+        "category": "Date",
+        "examples": [
+            "$verifier->field(\"test\")->date(\"Y-m-d\")"
+        ],
+        "parameters": [
+            {
+                "name": "format",
+                "type": "string",
+                "required": false,
+                "default": "Y-m-d",
+                "description": "Date format",
+                "example": "Y-m-d"
+            }
+        ]
+    },
+    "alphanumeric": {
+        "name": "alphanumeric",
+        "description": "Validates that a value contains only alphanumeric characters",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->alphanumeric"
+        ],
+        "parameters": []
+    },
+    "maxLength": {
+        "name": "maxLength",
+        "description": "Validates that a string does not exceed maximum length",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->maxLength(20)"
+        ],
+        "parameters": [
+            {
+                "name": "max",
+                "type": "int",
+                "required": true,
+                "default": null,
+                "description": "Maximum length allowed",
+                "example": 20
+            }
+        ]
+    },
+    "disposableEmail": {
+        "name": "disposableEmail",
+        "description": "Validates that an email is not from a disposable domain",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->disposableEmail([])"
+        ],
+        "parameters": [
+            {
+                "name": "disposables",
+                "type": "array",
+                "required": false,
+                "default": [],
+                "description": "Array of disposable domain patterns",
+                "example": []
+            }
+        ]
+    },
+    "containsNumber": {
+        "name": "containsNumber",
+        "description": "Validates that a string contains at least one digit",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->containsNumber"
+        ],
+        "parameters": []
+    },
+    "notAlphanumeric": {
+        "name": "notAlphanumeric",
+        "description": "Validates that a value contains non-alphanumeric characters",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->notAlphanumeric"
+        ],
+        "parameters": []
+    },
+    "minLength": {
+        "name": "minLength",
+        "description": "Validates that a string has a minimum length",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->minLength(8)"
+        ],
+        "parameters": [
+            {
+                "name": "min",
+                "type": "int",
+                "required": true,
+                "default": null,
+                "description": "Minimum length required",
+                "example": 8
+            }
+        ]
+    },
+    "containsUpper": {
+        "name": "containsUpper",
+        "description": "Validates that a string contains at least one uppercase letter",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->containsUpper"
+        ],
+        "parameters": []
+    },
+    "email": {
+        "name": "email",
+        "description": "Validates that a value is a valid email address",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->email"
+        ],
+        "parameters": []
+    },
+    "regex": {
+        "name": "regex",
+        "description": "Validates that a value matches a regular expression pattern. Warnings are suppressed",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->regex(\"\/^[A-Z]+$\/\")"
+        ],
+        "parameters": [
+            {
+                "name": "pattern",
+                "type": "string",
+                "required": true,
+                "default": null,
+                "description": "Regular expression pattern",
+                "example": "\/^[A-Z]+$\/"
+            }
+        ]
+    },
+    "ipAddress": {
+        "name": "ipAddress",
+        "description": "Validates that a value is a valid IP address (IPv4 or IPv6)",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->ipAddress"
+        ],
+        "parameters": []
+    },
+    "containsLower": {
+        "name": "containsLower",
+        "description": "Validates that a string contains at least one lowercase letter",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->containsLower"
+        ],
+        "parameters": []
+    },
+    "containsSpecialCharacter": {
+        "name": "containsSpecialCharacter",
+        "description": "Validates that a string contains at least one special character",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"test\")->containsSpecialCharacter"
+        ],
+        "parameters": []
+    },
+    "greaterThan": {
+        "name": "greaterThan",
+        "description": "Validates that a value is greater than a specified limit",
+        "category": "Numeric",
+        "examples": [
+            "$verifier->field(\"test\")->greaterThan(18)"
+        ],
+        "parameters": [
+            {
+                "name": "min",
+                "type": "mixed",
+                "required": true,
+                "default": null,
+                "description": "Value must be greater than this",
+                "example": 18
+            }
+        ]
+    },
+    "lowerThan": {
+        "name": "lowerThan",
+        "description": "Validates that a value is less than a specified limit",
+        "category": "Numeric",
+        "examples": [
+            "$verifier->field(\"test\")->lowerThan(65)"
+        ],
+        "parameters": [
+            {
+                "name": "max",
+                "type": "mixed",
+                "required": true,
+                "default": null,
+                "description": "Value must be less than this",
+                "example": 65
+            }
+        ]
+    },
+    "notIn": {
+        "name": "notIn",
+        "description": "Validates that a value does not exist in a forbidden list or as an object property",
+        "category": "Comparison",
+        "examples": [
+            "$verifier->field(\"test\")->notIn([\"admin\", \"root\"])"
+        ],
+        "parameters": [
+            {
+                "name": "forbidden",
+                "type": "object|array",
+                "required": true,
+                "default": null,
+                "description": "Array or object of forbidden values",
+                "example": [
+                    "admin",
+                    "root"
+                ]
+            }
+        ]
+    },
+    "in": {
+        "name": "in",
+        "description": "Validates that a value exists in an allowed list or as an object property",
+        "category": "Comparison",
+        "examples": [
+            "$verifier->field(\"test\")->in([\"active\", \"pending\"])"
+        ],
+        "parameters": [
+            {
+                "name": "allowed",
+                "type": "object|array",
+                "required": true,
+                "default": null,
+                "description": "Array or object of allowed values",
+                "example": [
+                    "active",
+                    "pending"
+                ]
+            }
+        ]
+    },
+    "boolean": {
+        "name": "boolean",
+        "description": "Validates that a value is a boolean. In strict mode (default), only true\/false are accepted",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->boolean(true)"
+        ],
+        "parameters": [
+            {
+                "name": "strict",
+                "type": "bool",
+                "required": false,
+                "default": true,
+                "description": "Strict mode: true for booleans only",
+                "example": true
+            }
+        ]
+    },
+    "json": {
+        "name": "json",
+        "description": "Validates that a string is valid JSON",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->json"
+        ],
+        "parameters": []
+    },
+    "numeric": {
+        "name": "numeric",
+        "description": "Validates that a value is numeric",
+        "category": "Type",
+        "examples": [
+            "$verifier->field(\"test\")->numeric"
+        ],
+        "parameters": []
+    },
+    "fileMime": {
+        "name": "fileMime",
+        "description": "Validates that a file has an allowed MIME type",
+        "category": "File",
+        "examples": [
+            "$verifier->field(\"test\")->fileMime(\"image\/jpeg\")"
+        ],
+        "parameters": [
+            {
+                "name": "mime",
+                "type": "array|string",
+                "required": true,
+                "default": null,
+                "description": "Allowed MIME type(s)",
+                "example": "image\/jpeg"
+            }
+        ]
+    },
+    "fileExists": {
+        "name": "fileExists",
+        "description": "Validates that a file exists at the given path",
+        "category": "File",
+        "examples": [
+            "$verifier->field(\"test\")->fileExists"
+        ],
+        "parameters": []
+    }
+}

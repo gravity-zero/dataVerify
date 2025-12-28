@@ -1,0 +1,13 @@
+/tests export-ignore
+/benchmarks export-ignore
+/examples export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/phpunit.xml export-ignore
+/infection.json.dist export-ignore
+/phpbench.json export-ignore
+/Makefile export-ignore
+/generate-docs.php export-ignore
+/tests.sh export-ignore
+/CHANGELOG.md export-ignore

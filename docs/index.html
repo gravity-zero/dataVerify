@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataVerify Validations</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .swagger-ui .topbar { display: none; }
+        .custom-header { 
+            padding: 40px 60px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .custom-header h1 { margin: 0 0 20px 0; font-size: 2.5em; }
+        .custom-header p { margin: 0; font-size: 1.1em; opacity: 0.9; }
+        .custom-content { padding: 40px 60px; max-width: 1200px; }
+        .custom-content h2 { 
+            margin: 40px 0 20px 0; 
+            font-size: 1.8em; 
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .custom-content h2:first-child { margin-top: 0; }
+        .category-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+        .category-item { 
+            padding: 12px 16px; 
+            background: #f8f9fa; 
+            border-radius: 6px; 
+            border-left: 4px solid #667eea;
+        }
+        .category-item strong { color: #667eea; }
+        pre[class*="language-"] { border-radius: 8px; margin: 20px 0; }
+        code[class*="language-"] { font-size: 0.9em; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
+        .feature-card { padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .feature-card h3 { margin-top: 0; color: #667eea; }
+        .swagger-ui { margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <h1>📚 DataVerify Validations</h1>
+        <p>Complete reference of validation rules with examples and documentation</p>
+    </div>
+    
+    <div class="custom-content">
+        <h2>📖 Quick Start</h2><pre><code class="language-php">use Gravity\DataVerify;
+
+$data = (object)[
+    'email' => 'user@example.com',
+    'age' => 25,
+    'password' => 'Secret123!',
+    'type' => 'premium'
+];
+
+$dv = new DataVerify($data);
+
+// Chain validations
+$dv
+    ->field('email')->required->email
+    ->field('age')->required->int->between(0, 120)
+    ->field('password')->required->minLength(8)->containsUpper->containsNumber;
+
+// Run validation
+$isValid = $dv->verify();
+
+// Get errors
+if (!$isValid) {
+    $errors = $dv->getErrors();
+}</code></pre><h2>📚 Categories</h2><p>Browse <strong>28</strong> validation rules organized in <strong>7</strong> categories:</p><div class="category-list"><div class="category-item"><strong>Comparison</strong> (2 rules)</div><div class="category-item"><strong>Core</strong> (1 rules)</div><div class="category-item"><strong>Date</strong> (1 rules)</div><div class="category-item"><strong>File</strong> (2 rules)</div><div class="category-item"><strong>Numeric</strong> (3 rules)</div><div class="category-item"><strong>String</strong> (12 rules)</div><div class="category-item"><strong>Type</strong> (7 rules)</div></div><h2>🌳 Nested Objects (Subfields)</h2><p>Validate nested data structures with dot notation:</p><pre><code class="language-php">$data->user = (object)[
+    'name' => 'John',
+    'email' => 'john@example.com',
+    'address' => (object)[
+        'city' => 'Paris',
+        'country' => 'FR'
+    ]
+];
+
+$dv = new DataVerify($data);
+$dv
+    ->field('user')->required->object
+        ->subfield('name')->required->string
+        ->subfield('email')->required->email
+        ->subfield('address')->required->object
+            ->subfield('address', 'city')->required->string
+            ->subfield('address', 'country')->in(['FR', 'DE', 'IT']);</code></pre><h2>⚙️ Validation Modes</h2><p>Choose between collecting all errors or stopping at the first one:</p><pre><code class="language-php">// Batch mode (default): Collect all errors
+$dv->verify();  // Returns all validation errors
+
+// Fail-fast mode: Stop at first error
+$dv->verify(false);  // Returns only first error</code></pre><h2>🔄 Instance Lifecycle</h2><p><strong>Important:</strong> Each instance can only call <code>verify()</code> once. Create a new instance for each validation.</p><pre><code class="language-php">// ✅ Correct: One instance per validation
+$dv1 = new DataVerify($data);
+$dv1->field('email')->required;
+$dv1->verify();
+
+$dv2 = new DataVerify($data);  // New instance
+$dv2->field('password')->required;
+$dv2->verify();
+
+// ❌ Incorrect: Reusing instance
+$dv3 = new DataVerify($data);
+$dv3->verify();
+$dv3->verify();  // Throws LogicException!</code></pre><h2>❌ Error Handling</h2><p>Errors are returned with detailed information:</p><pre><code class="language-php">if (!$dv->verify()) {
+    // Get errors as arrays
+    $errors = $dv->getErrors();
+    // [
+    //     [
+    //         'field' => 'email',
+    //         'alias' => 'Email Address',
+    //         'test' => 'email',
+    //         'message' => 'The field Email Address must be a valid email',
+    //         'value' => 'invalid'
+    //     ]
+    // ]
+
+    // Or as objects
+    $errors = $dv->getErrors(true);
+    foreach ($errors as $error) {
+        echo $error->message;
+    }
+}</code></pre><h2>⚡ Conditional Validations</h2><p>Apply validations based on other field values:</p><pre><code class="language-php">// Require 'discount_code' only if type is 'premium'
+$dv->field('discount_code')
+    ->when('type', '=', 'premium')
+    ->then->required;
+
+// Complex conditions with AND/OR
+$dv->field('vat_number')
+    ->when('country', 'in', ['FR', 'DE'])
+    ->and('type', '=', 'business')
+    ->then->required->regex('/^[A-Z]{2}[0-9]+$/');
+
+// Operators: =, !=, in, not_in, >, <, >=, <=</code></pre><div class="feature-grid"><div class="feature-card"><h3>🔧 Custom Validations</h3><pre><code class="language-php">use Gravity\Validations\ValidationStrategy;
+use Gravity\Attributes\ValidationRule;
+
+#[ValidationRule(
+    description: 'Validates UUID v4',
+    category: 'Custom'
+)]
+class UuidValidation extends ValidationStrategy
+{
+    public function getName(): string
+    {
+        return 'uuid';
+    }
+    
+    protected function handler(mixed $value): bool
+    {
+        return preg_match('/^[0-9a-f-]{36}$/i', $value);
+    }
+}
+
+$dv->registerStrategy(new UuidValidation());</code></pre></div><div class="feature-card"><h3>🌍 Internationalization</h3><pre><code class="language-php">// Switch to French
+$dv->setLocale('fr');
+
+// Add custom translations
+$dv->addTranslations([
+    'validation.required' => 'El campo {field} es obligatorio'
+], 'es');
+
+// Placeholders: {field}, {min}, {max}, {value}</code></pre></div></div><h2>📝 Optional Fields</h2><p>Fields without <code>required</code> accept null values. Validations only run when a value is present:</p><pre><code class="language-php">$data->email = null;  // Optional field
+
+$dv->field('email')->email;  // ✓ Passes (null skipped)
+
+$data->email = 'invalid';  // Invalid value
+$dv->field('email')->email;  // ✗ Fails</code></pre>
+    </div>
+    
+    <div id="swagger-ui"></div>
+    
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup-templating.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script>
+        window.onload = function() {
+            SwaggerUIBundle({
+                url: './openapi.json',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                docExpansion: 'list',
+                defaultModelsExpandDepth: 2,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ]
+            });
+            Prism.highlightAll();
+        };
+    </script>
+</body>
+</html>
