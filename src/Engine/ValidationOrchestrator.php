@@ -172,22 +172,18 @@ class ValidationOrchestrator
 
     /**
      * Check if conditional validation should execute
+     * 
+     * Delegates to ConditionalEngine for condition evaluation
      */
     private function shouldExecuteConditional($conditional): bool
     {
         $fieldValue = $this->dataTraverser->getFieldValue($conditional->field);
         
-        return match($conditional->operator) {
-            '=' => $fieldValue === $conditional->value,
-            '!=' => $fieldValue !== $conditional->value,
-            'in' => in_array($fieldValue, $conditional->value, true),
-            'not_in' => !in_array($fieldValue, $conditional->value, true),
-            '>' => $fieldValue > $conditional->value,
-            '<' => $fieldValue < $conditional->value,
-            '>=' => $fieldValue >= $conditional->value,
-            '<=' => $fieldValue <= $conditional->value,
-            default => throw new \InvalidArgumentException("Unsupported operator: {$conditional->operator}")
-        };
+        return $this->conditionalEngine->evaluateSingleCondition(
+            $fieldValue,
+            $conditional->operator,
+            $conditional->value
+        );
     }
 
     /**

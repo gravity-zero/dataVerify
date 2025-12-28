@@ -3,6 +3,7 @@
 namespace Gravity\Engine;
 
 use Gravity\Enums\ConditionOperator;
+use Gravity\Enums\ConditionalOperator;
 
 /**
  * ConditionalEngine
@@ -25,6 +26,8 @@ class ConditionalEngine
      */
     public function when(string $field, string $operator, mixed $value): void
     {
+        $this->validateOperator($operator);
+        
         if ($this->pendingConditions !== null && !$this->thenMode) {
             throw new \LogicException(
                 "Previous 'when()' was not followed by 'then'. " .
@@ -46,6 +49,8 @@ class ConditionalEngine
      */
     public function and(string $field, string $operator, mixed $value): void
     {
+        $this->validateOperator($operator);
+        
         if ($this->pendingConditions === null) {
             throw new \LogicException(
                 "Cannot use 'and' without 'when()'. Start with when() first."
@@ -78,6 +83,8 @@ class ConditionalEngine
      */
     public function or(string $field, string $operator, mixed $value): void
     {
+        $this->validateOperator($operator);
+        
         if ($this->pendingConditions === null) {
             throw new \LogicException(
                 "Cannot use 'or' without 'when()'. Start with when() first."
@@ -167,10 +174,31 @@ class ConditionalEngine
     }
 
     /**
-     * Evaluate a single condition
+     * Validate that operator is recognized
      */
-    private function evaluateSingleCondition(mixed $actual, string $operator, mixed $expected): bool
+    private function validateOperator(string $operator): void
     {
+        if (ConditionalOperator::tryFrom($operator) === null) {
+            $validOperators = implode(', ', array_map(
+                fn($case) => $case->value,
+                ConditionalOperator::cases()
+            ));
+            
+            throw new \InvalidArgumentException(
+                "Invalid operator '{$operator}'. Allowed operators: {$validOperators}"
+            );
+        }
+    }
+
+    /**
+     * Evaluate a single condition
+     * 
+     * Public for reuse by ValidationOrchestrator (conditional validations)
+     */
+    public function evaluateSingleCondition(mixed $actual, string $operator, mixed $expected): bool
+    {
+        $this->validateOperator($operator);
+        
         return match($operator) {
             '=' => $actual === $expected,
             '!=' => $actual !== $expected,
