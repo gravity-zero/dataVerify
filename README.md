@@ -2,8 +2,11 @@
 
 A fluent, zero-dependency PHP validation library.
 
+[![Latest Version](https://img.shields.io/packagist/v/gravity/dataverify.svg?style=flat-square)](https://packagist.org/packages/gravity/dataverify)
+[![Total Downloads](https://img.shields.io/packagist/dt/gravity/dataverify.svg?style=flat-square)](https://packagist.org/packages/gravity/dataverify)
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.1-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENCE)
+
 ```bash
 composer require gravity/dataverify
 ```
