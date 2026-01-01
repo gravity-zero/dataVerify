@@ -7,6 +7,10 @@ A fluent, zero-dependency PHP validation library.
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.1-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENCE)
 
+## Requirements
+- PHP 8.1+
+- Composer (recommended) or manual installation
+
 ```bash
 composer require gravity/dataverify
 ```
@@ -248,16 +252,6 @@ Memory usage:          ~4.9MB (stable)
 ```
 
 **See:** [Full benchmarks](docs/BENCHMARK.md)
-
-## Compatibility
-
-| Platform | Status | Notes |
-|----------|--------|-------|
-| **PHP 8.1+** | ✅ Required | Minimum version |
-| **WordPress 6.0+** | ✅ Compatible | Use in plugins/themes |
-| **PrestaShop 8.0+** | ✅ Excellent fit | Native Composer support |
-| **Laravel/Symfony** | ✅ Compatible | Use as alternative validator |
-| **Moodle 4.3+** | ⚠️ Partial | Best for webservices/APIs |
 
 ## Examples
 
