@@ -18,6 +18,13 @@ Extend DataVerify with your own validation logic through custom strategies.
 ## Quick Start
 ```php
 // 1. Create strategy
+// The #[ValidationRule] attribute enables auto-documentation generation and IDE stub creation (See IDE Autocompletion)
+#[ValidationRule(
+    name: 'siret',
+    description: 'Validates French SIRET number (14 digits with Luhn check)',
+    category: 'Business',
+    examples: ['$verifier->field("company")->siret']
+)]
 class SiretStrategy extends ValidationStrategy
 {
     public function getName(): string { return 'siret'; }
@@ -124,6 +131,12 @@ $dv->field('special')->temp_validation;
 <summary><strong>Simple Strategy (No Parameters)</strong></summary>
 
 ```php
+#[ValidationRule(
+    name: 'positive',
+    description: 'Validates that a numeric value is strictly positive (greater than zero)',
+    category: 'Numeric',
+    examples: ['$verifier->field("amount")->positive']
+)]
 class PositiveStrategy extends ValidationStrategy
 {
     public function getName(): string { return 'positive'; }
@@ -333,6 +346,7 @@ protected function handler(mixed $value, int $a, int $b): bool
 
 <details>
 <summary><strong>Organize Strategies</strong></summary>
+
 ```
 app/Strategies/
 ├── Business/
@@ -377,11 +391,19 @@ abstract class ValidationStrategy
 
 **Example:**
 ```php
+
+#[ValidationRule(
+    name: 'my_validation',
+    description: 'Validates a value against custom business logic',
+    category: 'My Domain'
+)]
 class MyStrategy extends ValidationStrategy
 {
     public function getName(): string { return 'my_validation'; }
     
-    protected function handler(mixed $value, int $param): bool
+    protected function handler( mixed $value,
+     #[Param(name: 'param', description: 'Validation threshold parameter')]
+     int $param): bool
     {
         // $param becomes {param} in translations
     }
@@ -394,13 +416,13 @@ class MyStrategy extends ValidationStrategy
 <summary><strong>GlobalStrategyRegistry Methods</strong></summary>
 
 ```php
-DataVerify::global()->register(ValidationStrategyInterface $strategy): self
-DataVerify::global()->registerMultiple(array $strategies): self
-DataVerify::global()->loadFromDirectory(string $path, string $namespace): self
-DataVerify::global()->has(string $name): bool
-DataVerify::global()->get(string $name): ?ValidationStrategyInterface
-DataVerify::global()->clear(): self
-DataVerify::global()->getAll(): array
+DataVerify::global()->register(ValidationStrategyInterface $strategy): self // Register a single strategy
+DataVerify::global()->registerMultiple(array $strategies): self // Register multiple strategies at once
+DataVerify::global()->loadFromDirectory(string $path, string $namespace): self // Auto-discover and load strategies from a directory
+DataVerify::global()->has(string $name): bool // Check if a strategy exists
+DataVerify::global()->get(string $name): ?ValidationStrategyInterface // Retrieve a specific strategy
+DataVerify::global()->clear(): self // Remove all registered strategies
+DataVerify::global()->getAll(): array // Get all registered strategies
 ```
 
 </details>

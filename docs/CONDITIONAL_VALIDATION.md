@@ -87,6 +87,7 @@ $dv->field('admin_key')
 
 <details>
 <summary><strong>AND - All Must Be True</strong></summary>
+
 ```php
 $dv->field('discount_code')
    ->when('type', '=', 'premium')
@@ -111,6 +112,7 @@ $dv->field('premium_feature')
 
 <details>
 <summary><strong>OR - At Least One Must Be True</strong></summary>
+
 ```php
 $dv->field('vat_number')
    ->when('country', '=', 'FR')
@@ -137,6 +139,7 @@ $dv->field('vat_number')
 
 <details>
 <summary><strong>Dot Notation for Nested Objects</strong></summary>
+
 ```php
 $data->user = new stdClass();
 $data->user->type = "business";
@@ -203,6 +206,7 @@ $dv->field('discount')
 
 <details>
 <summary><strong>Must Use 'then' After Conditions</strong></summary>
+
 ```php
 // ❌ Missing 'then'
 ->when('status', '=', 'active')
@@ -221,6 +225,7 @@ $dv->field('discount')
 
 <details>
 <summary><strong>Age-Based Validation</strong></summary>
+
 ```php
 $dv->field('parental_consent')
    ->when('age', '<', 18)
@@ -233,6 +238,7 @@ $dv->field('parental_consent')
 
 <details>
 <summary><strong>Business Account</strong></summary>
+
 ```php
 $dv->field('company_name')
    ->when('account_type', '=', 'business')
@@ -251,6 +257,7 @@ $dv->field('company_name')
 
 <details>
 <summary><strong>Shipping Logic</strong></summary>
+
 ```php
 $dv->field('shipping_address')
    ->when('delivery_type', '=', 'shipping')
@@ -263,6 +270,7 @@ $dv->field('shipping_address')
 
 <details>
 <summary><strong>Payment Validation</strong></summary>
+
 ```php
 $dv->field('kyc_document')
    ->when('payment_method', 'in', ['crypto', 'wire_transfer'])
@@ -279,6 +287,7 @@ $dv->field('kyc_document')
 
 <details>
 <summary><strong>Mix Normal and Conditional</strong></summary>
+
 ```php
 $dv->field('email')
    ->required      // ← Always required
