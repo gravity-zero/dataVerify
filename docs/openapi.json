@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "DataVerify Validation Rules",
-        "description": "Complete reference of 28 validation rules. See above for usage examples.",
+        "description": "Complete reference of 30 validation rules. See above for usage examples.",
         "version": "1.0.0"
     },
     "components": {
@@ -134,6 +134,46 @@
                         "type": "array",
                         "example": [],
                         "default": []
+                    }
+                }
+            },
+            "disposableUrlDomain": {
+                "type": "object",
+                "title": "DisposableUrlDomain",
+                "description": "Validates that a URL is not from a disposable/temporary domain (URL shorteners, free hosting, etc.)\n\n**Usage:**\n```php\n$verifier->field(\"website\")->disposableUrlDomain\n```\n```php\n$verifier->field(\"website\")->disposableUrlDomain([\"bit.ly\", \"tinyurl.com\"])\n```\n\n**Parameters:**\n- `disposables`: []",
+                "x-category": "String",
+                "properties": {
+                    "disposables": {
+                        "description": "Array of disposable domain patterns",
+                        "type": "array",
+                        "example": [],
+                        "default": []
+                    }
+                }
+            },
+            "url": {
+                "type": "object",
+                "title": "Url",
+                "description": "Validates that a value is a valid URL with configurable schemes and TLD requirement\n\n**Usage:**\n```php\n$verifier->field(\"website\")->url\n```\n```php\n$verifier->field(\"api\")->url([\"http\", \"https\", \"ws\", \"wss\"])\n```\n```php\n$verifier->field(\"intranet\")->url([\"http\"], requireTld: false)\n```\n\n**Parameters:**\n- `schemes`: [\"http\",\"https\"]\n- `requireTld`: true",
+                "x-category": "String",
+                "properties": {
+                    "schemes": {
+                        "description": "Allowed URL schemes",
+                        "type": "array",
+                        "example": [
+                            "http",
+                            "https"
+                        ],
+                        "default": [
+                            "http",
+                            "https"
+                        ]
+                    },
+                    "requireTld": {
+                        "description": "Require a top-level domain (.com|.org|.net|...)",
+                        "type": "boolean",
+                        "example": true,
+                        "default": true
                     }
                 }
             },

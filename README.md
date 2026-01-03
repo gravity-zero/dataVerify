@@ -230,7 +230,7 @@ $dv->addTranslations([
 - [Custom Strategies](docs/CUSTOM_STRATEGIES.md) - Extend with your own rules
 - [Internationalization](docs/INTERNATIONALIZATION.md) - Multi-language error messages
 - [Error Handling](docs/ERROR_HANDLING.md) - Working with validation errors
-- [Validation Rules](docs/VALIDATIONS.md) - All 40+ built-in rules
+- [Validation Rules](docs/VALIDATIONS.md) - All 30+ built-in rules
 
 **Examples:**
 - [API Request Validation](examples/api-request.php)

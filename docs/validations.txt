@@ -9,6 +9,7 @@ Available validations:
 - containsUpper
 - date
 - disposableEmail
+- disposableUrlDomain
 - email
 - fileExists
 - fileMime
@@ -27,3 +28,4 @@ Available validations:
 - regex
 - required
 - string
+- url

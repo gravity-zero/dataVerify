@@ -1,6 +1,6 @@
 # Validation Rules Reference
 
-Complete reference of all **28** built-in validation rules.
+Complete reference of all **30** built-in validation rules.
 
 ## Table of Contents
 
@@ -9,7 +9,7 @@ Complete reference of all **28** built-in validation rules.
 - [Date](#date) (1 rules)
 - [File](#file) (2 rules)
 - [Numeric](#numeric) (3 rules)
-- [String](#string) (12 rules)
+- [String](#string) (14 rules)
 - [Type](#type) (7 rules)
 
 ---
@@ -238,6 +238,63 @@ $verifier->field("test")->maxLength(20)
 
 ```php
 $verifier->field("test")->disposableEmail([])
+```
+
+</details>
+
+<details>
+<summary><code>disposableUrlDomain</code> - Validates that a URL is not from a disposable/temporary domain (URL sh...</summary>
+
+**Description:**
+
+Validates that a URL is not from a disposable/temporary domain (URL shorteners, free hosting, etc.)
+
+**Parameters:**
+
+<table>
+<tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td><code>disposables</code></td><td><code>array</code></td><td align="center">✗</td><td>Array of disposable domain patterns<br><em>Example: <code>[]</code></em><br><em>Default: <code>[]</code></em></td></tr>
+</table>
+
+**Usage:**
+
+```php
+$verifier->field("website")->disposableUrlDomain
+```
+
+```php
+$verifier->field("website")->disposableUrlDomain(["bit.ly", "tinyurl.com"])
+```
+
+</details>
+
+<details>
+<summary><code>url</code> - Validates that a value is a valid URL with configurable schemes and TL...</summary>
+
+**Description:**
+
+Validates that a value is a valid URL with configurable schemes and TLD requirement
+
+**Parameters:**
+
+<table>
+<tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td><code>schemes</code></td><td><code>array</code></td><td align="center">✗</td><td>Allowed URL schemes<br><em>Example: <code>["http","https"]</code></em><br><em>Default: <code>["http","https"]</code></em></td></tr>
+<tr><td><code>requireTld</code></td><td><code>bool</code></td><td align="center">✗</td><td>Require a top-level domain (.com|.org|.net|...)<br><em>Example: <code>true</code></em><br><em>Default: <code>true</code></em></td></tr>
+</table>
+
+**Usage:**
+
+```php
+$verifier->field("website")->url
+```
+
+```php
+$verifier->field("api")->url(["http", "https", "ws", "wss"])
+```
+
+```php
+$verifier->field("intranet")->url(["http"], requireTld: false)
 ```
 
 </details>

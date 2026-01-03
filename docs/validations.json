@@ -142,6 +142,59 @@
             }
         ]
     },
+    "disposableUrlDomain": {
+        "name": "disposableUrlDomain",
+        "description": "Validates that a URL is not from a disposable\/temporary domain (URL shorteners, free hosting, etc.)",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"website\")->disposableUrlDomain",
+            "$verifier->field(\"website\")->disposableUrlDomain([\"bit.ly\", \"tinyurl.com\"])"
+        ],
+        "parameters": [
+            {
+                "name": "disposables",
+                "type": "array",
+                "required": false,
+                "default": [],
+                "description": "Array of disposable domain patterns",
+                "example": []
+            }
+        ]
+    },
+    "url": {
+        "name": "url",
+        "description": "Validates that a value is a valid URL with configurable schemes and TLD requirement",
+        "category": "String",
+        "examples": [
+            "$verifier->field(\"website\")->url",
+            "$verifier->field(\"api\")->url([\"http\", \"https\", \"ws\", \"wss\"])",
+            "$verifier->field(\"intranet\")->url([\"http\"], requireTld: false)"
+        ],
+        "parameters": [
+            {
+                "name": "schemes",
+                "type": "array",
+                "required": false,
+                "default": [
+                    "http",
+                    "https"
+                ],
+                "description": "Allowed URL schemes",
+                "example": [
+                    "http",
+                    "https"
+                ]
+            },
+            {
+                "name": "requireTld",
+                "type": "bool",
+                "required": false,
+                "default": true,
+                "description": "Require a top-level domain (.com|.org|.net|...)",
+                "example": true
+            }
+        ]
+    },
     "containsNumber": {
         "name": "containsNumber",
         "description": "Validates that a string contains at least one digit",
