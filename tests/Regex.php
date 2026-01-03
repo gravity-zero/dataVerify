@@ -48,4 +48,124 @@ class Regex extends TestCase
 
         $this->assertFalse($dv->verify());
     }
+
+    public function testRegexErrorMessageIsNotEmpty(): void
+    {
+        $data = new stdClass();
+        $data->code = "INVALID";
+        
+        $pattern = '/^[A-Z]{3}-[0-9]{3}$/';
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('code')->regex($pattern);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertNotEmpty($message);
+        $this->assertStringNotContainsString('{', $message);
+        $this->assertStringNotContainsString('}', $message);
+    }
+
+    public function testRegexErrorMessageReferencesField(): void
+    {
+        $data = new stdClass();
+        $data->postal_code = "invalid";
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('postal_code')->regex('/^[0-9]{5}$/');
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('postal_code', $message);
+    }
+
+    public function testRegexCustomErrorMessage(): void
+    {
+        $data = new stdClass();
+        $data->license_plate = "INVALID";
+        
+        $pattern = '/^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('license_plate')
+            ->errorMessage('License plate must be in format: AB-123-CD')
+            ->regex($pattern);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        
+        $this->assertEquals(
+            'License plate must be in format: AB-123-CD',
+            $errors[0]['message']
+        );
+    }
+
+    public function testRegexErrorMessageWithAlias(): void
+    {
+        $data = new stdClass();
+        $data->ref = "INVALID";
+        
+        $pattern = '/^REF-[0-9]{4}$/';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('ref')
+            ->alias('Reference Number')
+            ->regex($pattern);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('Reference Number', $message);
+    }
+
+    public function testMultipleRegexErrorsReferenceCorrectFields(): void
+    {
+        $data = new stdClass();
+        $data->code1 = "INVALID1";
+        $data->code2 = "INVALID2";
+        $data->code3 = "INVALID3";
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('code1')->regex('/^[A-Z]{3}$/')
+            ->field('code2')->regex('/^[0-9]{5}$/')
+            ->field('code3')->regex('/^[A-Z][0-9]{2}$/');
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $this->assertCount(3, $errors);
+        
+        $this->assertStringContainsString('code1', $errors[0]['message']);
+        $this->assertStringContainsString('code2', $errors[1]['message']);
+        $this->assertStringContainsString('code3', $errors[2]['message']);
+    }
+
+    public function testRegexErrorMessageIsDescriptive(): void
+    {
+        $data = new stdClass();
+        $data->value = "test";
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('value')->regex('/^[0-9]+$/');
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertGreaterThan(15, strlen($message),
+            "Message should be descriptive (>15 chars). Got: {$message}");
+    }
 }

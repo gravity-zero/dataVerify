@@ -823,4 +823,472 @@ class ConditionalValidation extends TestCase
         
         $this->assertTrue($dv->verify()); // Pas d'erreur car condition false
     }
+
+    public function testAllValidationsAfterThenAreConditional(): void
+    {
+        $data = (object)[
+            'type' => 'basic',
+            'field' => 'not-an-email'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('type', '=', 'premium')
+            ->then->required->email->minLength(10);
+
+        $this->assertTrue($dv->verify());
+    }
+
+    public function testAllValidationsAfterThenExecuteWhenConditionTrue(): void
+    {
+        $data = (object)[
+            'type' => 'premium',
+            'field' => 'ab'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('type', '=', 'premium')
+            ->then->required->email->minLength(10);
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertGreaterThanOrEqual(2, count($errors));
+        
+        $testNames = array_column($errors, 'test');
+        $this->assertContains('email', $testNames);
+        $this->assertContains('minLength', $testNames);
+    }
+
+    public function testMultipleWhenThenOnSameField(): void
+    {
+        $data = (object)[
+            'country' => 'FR',
+            'type' => 'B2B',
+            'vat' => ''
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('vat')
+            ->when('country', '=', 'FR')
+            ->then->required
+            ->when('type', '=', 'B2B')
+            ->then->minLength(11);
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(1, $errors);
+        $this->assertEquals('required', $errors[0]['test']);
+    }
+
+    public function testMultipleWhenThenDifferentConditionResults(): void
+    {
+        $data = (object)[
+            'country' => 'US',
+            'type' => 'B2B',
+            'vat' => 'short'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('vat')
+            ->when('country', '=', 'FR')
+            ->then->required->email
+            ->when('type', '=', 'B2B')
+            ->then->minLength(11);
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(1, $errors);
+        $this->assertEquals('minLength', $errors[0]['test']);
+    }
+
+    public function testSecondWhenResetsConditionCache(): void
+    {
+        $data = (object)[
+            'first_trigger' => true,
+            'second_trigger' => false,
+            'field' => 'value'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('first_trigger', '=', true)
+            ->then->required
+            ->when('second_trigger', '=', true)
+            ->then->email;
+
+        $this->assertTrue($dv->verify());
+    }
+
+    public function testFieldThrowsOnIncompleteConditional(): void
+    {
+        $data = (object)['a' => 'value', 'trigger' => 'active'];
+        
+        $dv = new DataVerify($data);
+        $dv->field('a')->when('trigger', '=', 'active');
+        
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Incomplete conditional validation");
+        
+        $dv->field('b');
+    }
+
+    public function testSubfieldThrowsOnIncompleteConditional(): void
+    {
+        $data = (object)[
+            'parent' => (object)['child' => 'value'],
+            'trigger' => 'active'
+        ];
+        
+        $dv = new DataVerify($data);
+        $dv->field('parent')->object
+            ->subfield('child')->when('trigger', '=', 'active');
+        
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Incomplete conditional validation");
+        
+        $dv->subfield('other');
+    }
+
+    public function testSecondWhenWithoutThenAfterFirstThrows(): void
+    {
+        $data = (object)['field' => 'value', 'a' => 1, 'b' => 2];
+        
+        $dv = new DataVerify($data);
+        $dv->field('field')->when('a', '=', 1);
+        
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Previous 'when()' was not followed by 'then'");
+        
+        $dv->when('b', '=', 2);
+    }
+
+    public function testConditionEvaluatedOncePerChain(): void
+    {
+        $data = (object)[
+            'trigger' => 'active',
+            'field' => 'x'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('trigger', '=', 'active')
+            ->then->minLength(5)->email->numeric;
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(3, $errors);
+        
+        $testNames = array_column($errors, 'test');
+        $this->assertContains('minLength', $testNames);
+        $this->assertContains('email', $testNames);
+        $this->assertContains('numeric', $testNames);
+    }
+
+    public function testNormalValidationsBeforeConditional(): void
+    {
+        $data = (object)[
+            'trigger' => false,
+            'field' => ''
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->required
+            ->when('trigger', '=', true)
+            ->then->email;
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(1, $errors);
+        $this->assertEquals('required', $errors[0]['test']);
+    }
+
+    public function testThreeConsecutiveWhenThenBlocks(): void
+    {
+        $data = (object)[
+            'a' => true,
+            'b' => false,
+            'c' => true,
+            'field' => 'x'
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('a', '=', true)->then->minLength(5)
+            ->when('b', '=', true)->then->minLength(10)
+            ->when('c', '=', true)->then->minLength(15);
+
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(2, $errors);
+    }
+
+    public function testThenWithParentheses(): void
+    {
+        $data = (object)[
+            'trigger' => true,
+            'field' => ''
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('trigger', '=', true)
+            ->then()->required;
+
+        $this->assertFalse($dv->verify());
+    }
+
+    public function testConditionalWithNullConditionFieldValue(): void
+    {
+        $data = (object)[
+            'trigger' => null,
+            'field' => ''
+        ];
+
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('trigger', '=', null)
+            ->then->required;
+
+        $this->assertFalse($dv->verify());
+    }
+
+    public function testConditionalMinLengthIncludesParameterInMessage(): void
+    {
+        $data = new stdClass();
+        $data->type = 'premium';
+        $data->description = 'short';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('description')
+            ->when('type', '=', 'premium')
+            ->then->minLength(50);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('50', $message, 
+            "Conditional minLength error MUST contain parameter value. Got: {$message}");
+        
+        $this->assertStringNotContainsString('{min}', $message);
+    }
+
+    public function testConditionalMaxLengthIncludesParameterInMessage(): void
+    {
+        $data = new stdClass();
+        $data->type = 'basic';
+        $data->bio = str_repeat('x', 300);
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('bio')
+            ->when('type', '=', 'basic')
+            ->then->maxLength(200);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('200', $message,
+            "Conditional maxLength error MUST contain parameter. Got: {$message}");
+        
+        $this->assertStringNotContainsString('{max}', $message);
+    }
+
+    public function testConditionalBetweenIncludesBothParametersInMessage(): void
+    {
+        $data = new stdClass();
+        $data->age_group = 'adult';
+        $data->age = 150;
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('age')
+            ->when('age_group', '=', 'adult')
+            ->then->between(18, 120);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('18', $message,
+            "Conditional between error MUST contain min. Got: {$message}");
+        $this->assertStringContainsString('120', $message,
+            "Conditional between error MUST contain max. Got: {$message}");
+        
+        $this->assertStringNotContainsString('{min}', $message);
+        $this->assertStringNotContainsString('{max}', $message);
+    }
+
+    public function testConditionalGreaterThanIncludesParameterInMessage(): void
+    {
+        $data = new stdClass();
+        $data->has_discount = true;
+        $data->amount = 5;
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('amount')
+            ->when('has_discount', '=', true)
+            ->then->greaterThan(10);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('10', $message,
+            "Conditional greaterThan MUST contain threshold. Got: {$message}");
+    }
+
+    public function testConditionalLowerThanIncludesParameterInMessage(): void
+    {
+        $data = new stdClass();
+        $data->is_child = true;
+        $data->age = 20;
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('age')
+            ->when('is_child', '=', true)
+            ->then->lowerThan(18);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('18', $message,
+            "Conditional lowerThan MUST contain threshold. Got: {$message}");
+    }
+
+    public function testConditionalValidationWithAliasShowsAlias(): void
+    {
+        $data = new stdClass();
+        $data->account_type = 'pro';
+        $data->company_name = 'AB';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('company_name')
+            ->alias('Company Name')
+            ->when('account_type', '=', 'pro')
+            ->then->minLength(3);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('Company Name', $message);
+        
+        $this->assertStringContainsString('3', $message);
+    }
+
+    public function testConditionalValidationWithCustomMessage(): void
+    {
+        $data = new stdClass();
+        $data->tier = 'premium';
+        $data->code = 'ABC';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('code')
+            ->errorMessage('Premium users must have codes of at least 10 characters')
+            ->when('tier', '=', 'premium')
+            ->then->minLength(10);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        
+        $this->assertEquals(
+            'Premium users must have codes of at least 10 characters',
+            $errors[0]['message']
+        );
+    }
+
+    public function testMultipleChainedConditionalsHaveCorrectParameters(): void
+    {
+        $data = new stdClass();
+        $data->type1 = true;
+        $data->type2 = true;
+        $data->value = 'x';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('value')
+            ->when('type1', '=', true)
+            ->then->minLength(5)
+            ->when('type2', '=', true)
+            ->then->minLength(10);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        
+        $firstMessage = $errors[0]['message'];
+        $this->assertStringContainsString('5', $firstMessage,
+            "First conditional (minLength 5) MUST show parameter. Got: {$firstMessage}");
+    }
+
+    public function testConditionalMessagesDoNotContainPlaceholders(): void
+    {
+        $data = new stdClass();
+        $data->type = 'test';
+        $data->value = 'x';
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('value')
+            ->when('type', '=', 'test')
+            ->then->minLength(10);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringNotContainsString('{', $message);
+        $this->assertStringNotContainsString('}', $message);
+        
+        $this->assertNotEmpty($message);
+    }
+
+    public function testWhenWithoutThenThrowsExceptionOnNextField(): void
+    {
+        $data = ['field' => 'value', 'trigger' => 'active'];
+        $dv = new DataVerify($data);
+        
+        $dv->field('field')->when('trigger', '=', 'active');
+        
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Incomplete conditional validation");
+        
+        $dv->field('another_field');
+    }
+
+    public function testNormalValidationNotAddedDuringThenMode(): void
+    {
+        $data = (object)['type' => 'basic', 'field' => ''];
+        
+        $dv = new DataVerify($data);
+        $dv->field('field')
+            ->when('type', '=', 'premium')
+            ->then->required;
+
+        $this->assertTrue($dv->verify());
+    }
 }

@@ -15,6 +15,7 @@ class ConditionalEngine
 {
     private ?array $pendingConditions = null;
     private ConditionOperator $conditionOperator = ConditionOperator::AND;
+    private ?bool $conditionResult = null;
     private bool $thenMode = false;
 
     public function __construct(
@@ -34,6 +35,8 @@ class ConditionalEngine
                 "Complete the conditional validation before starting a new one."
             );
         }
+
+        $this->reset();
         
         $this->pendingConditions = [
             [
@@ -147,6 +150,10 @@ class ConditionalEngine
      */
     public function evaluateConditions(): bool
     {
+        if ($this->conditionResult !== null) {
+            return $this->conditionResult;
+        }
+
         if ($this->pendingConditions === null) {
             return false;
         }
@@ -164,13 +171,16 @@ class ConditionalEngine
         }
         
         if (count($results) === 1) {
-            return $results[0];
+            $this->conditionResult = $results[0];
+            return $this->conditionResult;
         }
         
-        return match($this->conditionOperator) {
+        $this->conditionResult = match($this->conditionOperator) {
             ConditionOperator::AND => !in_array(false, $results, true),
             ConditionOperator::OR => in_array(true, $results, true),
         };
+        
+        return $this->conditionResult;
     }
 
     /**
@@ -218,6 +228,7 @@ class ConditionalEngine
     public function reset(): void
     {
         $this->pendingConditions = null;
+        $this->conditionResult = null;
         $this->thenMode = false;
         $this->conditionOperator = ConditionOperator::AND;
     }

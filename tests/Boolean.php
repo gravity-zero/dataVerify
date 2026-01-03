@@ -120,4 +120,145 @@ class Boolean extends TestCase
         $this->assertCount(1, $errors);
         $this->assertEquals('required', $errors[0]['test']);
     }
+
+    public function testBooleanErrorMessageIsDescriptive(): void
+    {
+        $data = new stdClass();
+        $data->active = 1;
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('active')->boolean();
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('active', $message);
+        
+        $this->assertTrue(
+            stripos($message, 'boolean') !== false || stripos($message, 'bool') !== false,
+            "Error message should mention 'boolean' or 'bool'. Got: {$message}"
+        );
+    }
+
+    /**
+     * Test that error message is not a placeholder
+     */
+    public function testBooleanErrorMessageIsNotPlaceholder(): void
+    {
+        $data = new stdClass();
+        $data->value = "invalid";
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('value')->boolean();
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertNotEmpty($message);
+        
+        $this->assertStringNotContainsString('{', $message);
+        $this->assertStringNotContainsString('}', $message);
+        
+        $this->assertGreaterThan(10, strlen($message));
+    }
+
+    public function testBooleanErrorMessageWithAlias(): void
+    {
+        $data = new stdClass();
+        $data->is_active = 1;
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('is_active')->alias('Status Flag')->boolean();
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertStringContainsString('Status Flag', $message);
+    }
+
+    public function testMultipleBooleanErrorsReferenceCorrectFields(): void
+    {
+        $data = new stdClass();
+        $data->field1 = 1;
+        $data->field2 = "invalid";
+        $data->field3 = 2;
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('field1')->boolean(strict: true)
+            ->field('field2')->boolean(strict: false)
+            ->field('field3')->boolean(strict: false);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $this->assertCount(3, $errors);
+        
+        $this->assertStringContainsString('field1', $errors[0]['message']);
+        $this->assertStringContainsString('field2', $errors[1]['message']);
+        $this->assertStringContainsString('field3', $errors[2]['message']);
+    }
+
+    public function testBooleanCustomErrorMessage(): void
+    {
+        $data = new stdClass();
+        $data->accepted = 1;
+        
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('accepted')
+            ->errorMessage('You must explicitly accept the terms (true/false)')
+            ->boolean();
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        $message = $errors[0]['message'];
+        
+        $this->assertEquals(
+            'You must explicitly accept the terms (true/false)',
+            $message
+        );
+    }
+
+    public function testBooleanStrictModeRejectsNonBooleanWithMessage(): void
+    {
+        $data = new stdClass();
+        $data->flag = 1;
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('flag')->boolean(strict: true);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        
+        $this->assertNotEmpty($errors[0]['message']);
+        
+        $this->assertStringContainsString('flag', $errors[0]['message']);
+    }
+
+    public function testBooleanLooseModeRejectsInvalidWithMessage(): void
+    {
+        $data = new stdClass();
+        $data->value = "invalid_string";
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('value')->boolean(strict: false);
+        
+        $this->assertFalse($verifier->verify());
+        
+        $errors = $verifier->getErrors();
+        
+        $message = $errors[0]['message'];
+        $this->assertNotEmpty($message);
+        $this->assertStringNotContainsString('{', $message);
+        $this->assertStringContainsString('value', $message);
+    }
 }

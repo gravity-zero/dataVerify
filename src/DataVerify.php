@@ -51,7 +51,7 @@ use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidation
  * @method DataVerify notIn(object|array $forbidden) Validates that a value does not exist in a forbidden list or as an object property
  * @method DataVerify regex(string $pattern) Validates that a value matches a regular expression pattern. Warnings are suppressed
  */
-class DataVerify implements DataVerifyInterface
+class DataVerify
 {
     private array|object $data;
     private ValidationContext $context;
@@ -98,6 +98,14 @@ class DataVerify implements DataVerifyInterface
 
     public function field(string $name): self
     {
+        if ($this->conditionalEngine->hasPendingConditions() && !$this->conditionalEngine->isThenMode()) {
+            throw new \LogicException(
+                "Incomplete conditional validation. Use 'then' after 'when()' before starting a new subfield."
+            );
+        }
+
+        $this->conditionalEngine->reset();
+
         $field = new FieldHandler($name);
         $this->context->push($field);
         $this->fields->add($field);
@@ -111,6 +119,16 @@ class DataVerify implements DataVerifyInterface
 
     public function subfield(string ...$path): self
     {
+
+        if ($this->conditionalEngine->hasPendingConditions() && !$this->conditionalEngine->isThenMode()) {
+            throw new \LogicException(
+                "Incomplete conditional validation. Use 'then' after 'when()' before starting a new subfield."
+            );
+        }
+
+        $this->conditionalEngine->reset();
+
+
         $field = $this->context->lastField();
 
         if(!$field){
@@ -193,6 +211,11 @@ class DataVerify implements DataVerifyInterface
 
     public function __call(string $method, array $args)
     {
+        if ($method === 'then') {
+            $this->conditionalEngine->activateThenMode();
+            return $this;
+        }
+
         $handler = $this->context->current();
 
         if (!$handler) {
@@ -209,24 +232,15 @@ class DataVerify implements DataVerifyInterface
             throw new ValidationTestNotFoundException($method);
         }
 
-        if ($this->conditionalEngine->isThenMode() && $this->conditionalEngine->hasPendingConditions()) {
-            $conditionMet = $this->conditionalEngine->evaluateConditions();
-            
-            if ($conditionMet) {
+        if ($this->conditionalEngine->isThenMode()) {
+            if($this->conditionalEngine->evaluateConditions()){
                 $handler->addValidation($method, $args);
             }
-            
-            $this->conditionalEngine->reset();
             
             return $this;
         }
 
         $handler->addValidation($method, $args);
-        
-        $validations = $handler->getValidations();
-        if (!array_key_exists($method, $validations)) {
-            throw new \LogicException("Validation {$method} was not registered");
-        }
         
         return $this;
     }

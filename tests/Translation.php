@@ -607,4 +607,5 @@ class Translation extends TestCase
         $this->assertEquals('valeur', $translator->trans('test', [], 'messages', 'fr'));
         $this->assertEquals('valeur2', $translator->trans('test2', [], 'messages', 'fr'));
     }
+    
 }

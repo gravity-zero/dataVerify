@@ -19,7 +19,7 @@ class SubFieldHandler implements ValidationHandlerInterface
 
     public function addValidation(string $testName, array $arguments = []): void
     {
-        $this->validations[$testName] = $arguments;
+        $this->validations[] = ['name' => $testName, 'args' => $arguments];
     }
 
     public function addConditionalValidation(string $testName, array $args, array $condition): void

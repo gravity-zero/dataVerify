@@ -28,13 +28,14 @@ class ErrorManager
         ValidationHandlerInterface $handler,
         string $testName,
         mixed $value,
-        string $path
+        string $path,
+        array $args = []
     ): void {
         $alias = $handler->getAlias() ?? $path;
         $errorMessage = $handler->getErrorMessage();
 
         if (!$errorMessage) {
-            $params = $this->extractValidationParams($handler, $testName);
+            $params = $this->buildValidationParams($testName, $args);
             $errorMessage = $this->translationManager->getValidationMessage(
                 $testName,
                 $alias,
@@ -49,24 +50,18 @@ class ErrorManager
     }
 
     /**
-     * Extract parameters from validation for error messages
-     * Examples: min/max for between, mime types for file_mime
+     * Build parameters from args for error messages
      */
-    private function extractValidationParams(
-    ValidationHandlerInterface $handler,
-    string $testName
-    ): array {
-        $validations = $handler->getValidations();
-        $args = $validations[$testName] ?? [];
-
+    private function buildValidationParams(string $testName, array $args): array
+    {
         $metadata = $this->resolveMetadata($testName);
         if (!$metadata) {
             return [];
         }
 
-        // mapping basé sur metadata->parameters
         return $this->mapArgsToParams($metadata, $args);
     }
+
 
     private function resolveMetadata(string $testName): ?ValidationMetadata
     {

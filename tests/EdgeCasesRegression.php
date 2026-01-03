@@ -94,4 +94,40 @@ class EdgeCasesRegression extends TestCase
         
         $this->assertFalse($verifier->verify(), 'empty object should NOT be valid with required');
     }
+
+    public function testNormalValidationIsActuallyAdded(): void
+    {
+        $data = (object)['field' => ''];
+        
+        $dv = new DataVerify($data);
+        $dv->field('field')->required;
+        
+        $this->assertFalse($dv->verify());
+        $errors = $dv->getErrors();
+        
+        $this->assertCount(1, $errors);
+        $this->assertEquals('required', $errors[0]['test']);
+    }
+
+    public function testConditionalStateIsResetBetweenFields(): void
+    {
+        $data = (object)[
+            'trigger1' => true,
+            'trigger2' => false,
+            'field1' => '',
+            'field2' => ''
+        ];
+        
+        $dv = new DataVerify($data);
+        $dv->field('field1')
+            ->when('trigger1', '=', true)
+            ->then->required;
+        
+        $dv->field('field2')->required;
+        
+        $this->assertFalse($dv->verify());
+        
+        $errors = $dv->getErrors();
+        $this->assertCount(2, $errors);
+    }
 }

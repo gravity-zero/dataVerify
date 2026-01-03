@@ -95,8 +95,8 @@ class ValidationOrchestrator
         bool $batchMode
     ): void {
         // Regular validations
-        foreach ($handler->getValidations() as $test => $args) {
-            $this->executeValidation($handler, $test, $args, $value, $path);
+        foreach ($handler->getValidations() as $validation) {
+            $this->executeValidation($handler, $validation['name'], $validation['args'], $value, $path);
             
             if ($this->shouldStopValidation($batchMode)) {
                 $lastError = $this->errors->getLastError();
@@ -135,7 +135,7 @@ class ValidationOrchestrator
         if ($test === 'required' || !$this->dataTraverser->isValueEmpty($value)) {
             $result = $this->runValidationTest($test, $value, $args);
             if (!$result) {
-                $this->errorManager->addError($handler, $test, $value, $path);
+                $this->errorManager->addError($handler, $test, $value, $path, $args);
             }
         }
     }
