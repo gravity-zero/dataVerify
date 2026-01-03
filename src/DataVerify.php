@@ -139,18 +139,42 @@ class DataVerify implements DataVerifyInterface
         return $this;
     }
 
+    /**
+     * Start a conditional validation chain. Must be terminated by ->then
+     * 
+     * @param string $field Field name to check
+     * @param string $operator Comparison operator (==, !=, >, <, >=, <=, in, not_in)
+     * @param mixed $value Value to compare against
+     * @return self
+     */
     public function when(string $field, string $operator, mixed $value): self
     {
         $this->conditionalEngine->when($field, $operator, $value);
         return $this;
     }
 
+    /**
+     * Add an AND condition. Must be preceded by ->when() or another ->and(). Cannot be mixed with ->or()
+     * 
+     * @param string $field Field name to check
+     * @param string $operator Comparison operator
+     * @param mixed $value Value to compare against
+     * @return self
+     */
     public function and(string $field, string $operator, mixed $value): self
     {
         $this->conditionalEngine->and($field, $operator, $value);
         return $this;
     }
 
+    /**
+     * Add an OR condition. Must be preceded by ->when() or another ->or(). Cannot be mixed with ->and()
+     * 
+     * @param string $field Field name to check
+     * @param string $operator Comparison operator
+     * @param mixed $value Value to compare against
+     * @return self
+     */
     public function or(string $field, string $operator, mixed $value): self
     {
         $this->conditionalEngine->or($field, $operator, $value);
