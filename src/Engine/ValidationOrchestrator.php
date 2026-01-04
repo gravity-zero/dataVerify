@@ -21,16 +21,36 @@ use Gravity\Registry\GlobalStrategyRegistry;
  */
 class ValidationOrchestrator
 {
+    private ?ErrorManager $errorManager = null;
+    
     public function __construct(
         private FieldCollection $fields,
         private ErrorCollection $errors,
-        private ErrorManager $errorManager,
         private DataTraverser $dataTraverser,
         private ConditionalEngine $conditionalEngine,
         private ValidationRegistry $registry,
         private LazyValidationRegistry $lazyRegistry
     ) {
         // No upfront initialization needed - lazy loading handles it
+    }
+    
+    /**
+     * Get or create ErrorManager lazily (only when validation fails)
+     */
+    private function getErrorManager(): ErrorManager
+    {
+        if ($this->errorManager === null) {
+            $this->errorManager = new ErrorManager($this->errors, $this->lazyRegistry);
+        }
+        return $this->errorManager;
+    }
+    
+    /**
+     * Set ErrorManager (for external configuration like translations)
+     */
+    public function setErrorManager(ErrorManager $errorManager): void
+    {
+        $this->errorManager = $errorManager;
     }
 
     /**
@@ -135,7 +155,7 @@ class ValidationOrchestrator
         if ($test === 'required' || !$this->dataTraverser->isValueEmpty($value)) {
             $result = $this->runValidationTest($test, $value, $args);
             if (!$result) {
-                $this->errorManager->addError($handler, $test, $value, $path, $args);
+                $this->getErrorManager()->addError($handler, $test, $value, $path, $args);
             }
         }
     }

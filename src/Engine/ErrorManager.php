@@ -15,11 +15,15 @@ use Gravity\Registry\{ValidationMetadata, GlobalStrategyRegistry, LazyValidation
  */
 class ErrorManager
 {
+    private ?TranslationManager $translationManager = null;
+    
     public function __construct(
         private ErrorCollection $errors,
-        private TranslationManager $translationManager,
-        private LazyValidationRegistry $registry
-    ) {}
+        private LazyValidationRegistry $registry,
+        ?TranslationManager $translationManager = null
+    ) {
+        $this->translationManager = $translationManager;
+    }
 
     /**
      * Add validation error with translated message
@@ -36,7 +40,7 @@ class ErrorManager
 
         if (!$errorMessage) {
             $params = $this->buildValidationParams($testName, $args);
-            $errorMessage = $this->translationManager->getValidationMessage(
+            $errorMessage = $this->getTranslationManager()->getValidationMessage(
                 $testName,
                 $alias,
                 $value,
@@ -93,9 +97,21 @@ class ErrorManager
 
     /**
      * Get translation manager for external configuration
+     * Lazy-loads if not already set
      */
     public function getTranslationManager(): TranslationManager
     {
+        if ($this->translationManager === null) {
+            $this->translationManager = new TranslationManager();
+        }
         return $this->translationManager;
+    }
+    
+    /**
+     * Set translation manager (for user customization)
+     */
+    public function setTranslationManager(TranslationManager $translationManager): void
+    {
+        $this->translationManager = $translationManager;
     }
 }
