@@ -61,13 +61,12 @@ class DataVerify
     private ValidationContext $context;
     private FieldCollection $fields;
     private ErrorCollection $errors;
-    private TranslationManager $translationManager;
+    private ?TranslationManager $translationManager = null;
     private bool $hasVerified = false;
 
     // Engines
     private ValidationOrchestrator $orchestrator;
     private ConditionalEngine $conditionalEngine;
-    private ErrorManager $errorManager;
     private DataTraverser $dataTraverser;
     private LazyValidationRegistry $lazyRegistry;
 
@@ -77,7 +76,6 @@ class DataVerify
         $this->context = new ValidationContext();
         $this->fields = new FieldCollection();
         $this->errors = new ErrorCollection();
-        $this->translationManager = new TranslationManager();
         $this->lazyRegistry = LazyValidationRegistry::instance();
         
         $this->initializeEngines();
@@ -87,12 +85,10 @@ class DataVerify
     {
         $this->dataTraverser = new DataTraverser($this->data);
         $this->conditionalEngine = new ConditionalEngine($this->dataTraverser);
-        $this->errorManager = new ErrorManager($this->errors, $this->translationManager, $this->lazyRegistry);
         
         $this->orchestrator = new ValidationOrchestrator(
             $this->fields,
             $this->errors,
-            $this->errorManager,
             $this->dataTraverser,
             $this->conditionalEngine,
             new ValidationRegistry(),
@@ -261,27 +257,42 @@ class DataVerify
         return $this;
     }
 
+    /**
+     * Get or create translation manager lazily
+     */
+    private function getTranslationManager(): TranslationManager
+    {
+        if ($this->translationManager === null) {
+            $this->translationManager = new TranslationManager();
+        }
+        
+        $errorManager = new ErrorManager($this->errors, $this->lazyRegistry, $this->translationManager);
+        $this->orchestrator->setErrorManager($errorManager);
+        
+        return $this->translationManager;
+    }
+
     public function setTranslator(TranslatorInterface $translator): self
     {
-        $this->translationManager->setTranslator($translator);
+        $this->getTranslationManager()->setTranslator($translator);
         return $this;
     }
 
     public function setLocale(string $locale): self
     {
-        $this->translationManager->setLocale($locale);
+        $this->getTranslationManager()->setLocale($locale);
         return $this;
     }
 
     public function addTranslations(array $translations, string $locale = 'en'): self
     {
-        $this->translationManager->addTranslations($translations, $locale);
+        $this->getTranslationManager()->addTranslations($translations, $locale);
         return $this;
     }
 
     public function loadLocale(string $locale, ?string $filePath = null): self
     {
-        $this->translationManager->loadLocale($locale, $filePath);
+        $this->getTranslationManager()->loadLocale($locale, $filePath);
         return $this;
     }
 

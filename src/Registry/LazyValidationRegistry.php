@@ -124,17 +124,12 @@ class LazyValidationRegistry
             return $this->discoveredClasses[$name];
         }
         
-        // Convert name to class name
-        // 'minLength' → 'MinLength'
-        // 'email' → 'Email'
         $className = ucfirst($name) . 'Validation';
         
-        // Try each directory
         foreach (self::VALIDATION_DIRS as $dir) {
             $fullClassName = self::VALIDATION_NAMESPACE . $dir . '\\' . $className;
             
             if (class_exists($fullClassName)) {
-                // Verify it implements the interface
                 if (is_subclass_of($fullClassName, ValidationStrategyInterface::class)) {
                     $this->discoveredClasses[$name] = $fullClassName;
                     return $fullClassName;
@@ -180,14 +175,12 @@ class LazyValidationRegistry
                     continue;
                 }
                 
-                // Instantiate to get the name
                 try {
                     $instance = new $fullClassName();
                     if ($instance instanceof ValidationStrategyInterface) {
                         $validations[] = $instance->getName();
                     }
                 } catch (\Throwable $e) {
-                    // Skip invalid classes
                     continue;
                 }
             }
