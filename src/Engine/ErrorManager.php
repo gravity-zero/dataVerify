@@ -1,5 +1,4 @@
 <?php
-
 namespace Gravity\Engine;
 
 use Gravity\Collections\ErrorCollection;
@@ -12,10 +11,18 @@ use Gravity\Registry\{ValidationMetadata, GlobalStrategyRegistry, LazyValidation
  * ErrorManager
  * 
  * Responsible for error creation, message translation, and parameter extraction.
+ * Optimized with metadata caching to avoid repeated lookups.
  */
 class ErrorManager
 {
     private ?TranslationManager $translationManager = null;
+    
+    /**
+     * Cache for resolved metadata (validation name → metadata)
+     * Avoids repeated registry lookups for the same validation
+     * @var array<string, ValidationMetadata|null>
+     */
+    private array $metadataCache = [];
     
     public function __construct(
         private ErrorCollection $errors,
@@ -55,32 +62,48 @@ class ErrorManager
 
     /**
      * Build parameters from args for error messages
+     * Optimized with metadata caching
      */
     private function buildValidationParams(string $testName, array $args): array
     {
+        if (empty($args)) {
+            return [];
+        }
+        
         $metadata = $this->resolveMetadata($testName);
-        if (!$metadata) {
+        if (!$metadata || empty($metadata->parameters)) {
             return [];
         }
 
         return $this->mapArgsToParams($metadata, $args);
     }
 
-
+    /**
+     * Resolve metadata with caching
+     */
     private function resolveMetadata(string $testName): ?ValidationMetadata
     {
-        return $this->registry->get($testName)
+        if (array_key_exists($testName, $this->metadataCache)) {
+            return $this->metadataCache[$testName];
+        }
+        
+        $metadata = $this->registry->get($testName)
             ?? GlobalStrategyRegistry::instance()->getAllMetadata()[$testName]
             ?? null;
+        
+        $this->metadataCache[$testName] = $metadata;
+        
+        return $metadata;
     }
 
+    /**
+     * Map args to parameter names
+     * ✅ Optimisation : early return si pas de parameters
+     */
     private function mapArgsToParams(ValidationMetadata $metadata, array $args): array
     {
-        if (empty($metadata->parameters)) {
-            return [];
-        }
-
         $params = [];
+        
         foreach ($metadata->parameters as $i => $p) {
             $name = $p['name'];
             $value = $args[$i] ?? ($p['default'] ?? null);

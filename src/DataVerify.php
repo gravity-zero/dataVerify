@@ -266,8 +266,6 @@ class DataVerify
             $this->translationManager = new TranslationManager();
         }
         
-        // Injecter dans l'ErrorManager de l'Orchestrator (qui pourrait être lazy aussi)
-        // On crée l'ErrorManager maintenant si on configure les traductions
         $errorManager = new ErrorManager($this->errors, $this->lazyRegistry, $this->translationManager);
         $this->orchestrator->setErrorManager($errorManager);
         
