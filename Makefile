@@ -10,7 +10,7 @@ mutation:
 	@vendor/bin/infection --threads=4
 
 benchmark:
-	@vendor/bin/phpbench run --report=default --warmup=2 --output=csv > benchmarks/bench_results.csv
+	@vendor/bin/phpbench run --report=default --iterations=10 --revs=1000 --warmup=2 --output=csv > benchmarks/bench_results.csv
 
 p99:
 	@cd benchmarks && php analyze_bench.php

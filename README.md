@@ -244,11 +244,11 @@ $dv->addTranslations([
 
 DataVerify is designed for production with predictable sub-millisecond performance:
 ```
-Simple validation:     ~50μs  (99% < 50μs)
-Complex nested:        ~72μs  (99% < 72μs)
-Batch mode (100 fields): 1.5ms
-Fail-fast (100 fields): 0.7ms  (2x faster)
-Memory usage:          ~4.9MB (stable)
+Simple validation:       ~8.8μs   (99% < 9μs)
+Complex nested:          ~17.1μs  (99% < 18μs)
+Batch mode (100 fields):  1.15ms
+Fail-fast (100 fields):   0.23ms  (2.3x faster)
+Memory usage:            ~4.9MB   (stable)
 ```
 
 **See:** [Full benchmarks](docs/BENCHMARK.md)
