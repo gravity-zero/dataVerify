@@ -218,10 +218,10 @@ $dv->addTranslations([
 - ✅ **Zero dependencies** - Pure PHP 8.1+, no vendor bloat
 - ✅ **Fluent API** - Readable, chainable validations
 - ✅ **Extensible** - Custom strategies with auto-documentation
-- ✅ **Fast** - ~50μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
+- ✅ **Fast** - ~9μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
 - ✅ **i18n ready** - Built-in translation support (EN, FR)
 - ✅ **Framework agnostic** - Works with WordPress, Laravel, Symfony, vanilla PHP
-- ✅ **Production tested** - 346 tests, 72% mutation score
+- ✅ **Production tested** - 482 tests, 75% mutation score
 
 ## Documentation
 
