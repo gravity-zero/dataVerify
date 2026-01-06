@@ -7,9 +7,10 @@ use Gravity\Config\DisposableEmailDomains;
 
 #[ValidationRule(
     name: 'disposableEmail',
-    description: 'Validates that an email is not from a disposable domain',
+    description: 'Validates that an email is not from a disposable domain, can be overriden ["@yourDisposableDomain", ...]',
     category: 'String',
-    examples: ['$verifier->field("test")->disposableEmail([])']
+    examples: ['$verifier->field("email")->disposableEmail',
+               '$verifier->field("email")->disposableEmail(["@yourDisposableDomain", ...])']
 )]
 class DisposableEmailValidation extends ValidationStrategy
 {

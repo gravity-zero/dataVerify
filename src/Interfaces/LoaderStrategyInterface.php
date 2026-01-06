@@ -5,9 +5,9 @@ namespace Gravity\Interfaces;
 interface LoaderStrategyInterface
 {
     /**
-     * Load translations from a resource
+     * Load translations for a locale/domain from a resource.
      *
-     * @param mixed $resource The resource (file path, array, etc.)
+     * @param array<string,mixed>|string $resource The resource (file path, array, etc.)
      * @param string $locale The locale
      * @param string $domain The domain
      * @return array The translations ['key' => 'translated value']
@@ -17,7 +17,7 @@ interface LoaderStrategyInterface
     /**
      * Check if this loader can handle the given resource
      *
-     * @param mixed $resource
+     * @param array<string, mixed>|string $resource
      * @return bool
      */
     public function supports(array|string $resource): bool;

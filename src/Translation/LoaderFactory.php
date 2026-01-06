@@ -22,7 +22,7 @@ class LoaderFactory
 
     /**
      * Get the appropriate loader for a resource
-     *
+     * @param array<string, mixed>|string $resource
      * @throws \InvalidArgumentException if no loader supports the resource
      */
     public function getLoader(mixed $resource): LoaderStrategyInterface

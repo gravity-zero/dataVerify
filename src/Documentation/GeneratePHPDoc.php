@@ -60,6 +60,27 @@ class GeneratePHPDoc
         // Generate PHPDoc
         return self::buildPhpDoc($properties, $methods);
     }
+
+    private static function normalizePhpDocType(\ReflectionType $type): string
+    {
+        if ($type instanceof \ReflectionNamedType) {
+            $name = $type->getName();
+
+            return match ($name) {
+                'DateTime', 'DateTimeImmutable' => '\DateTimeInterface',
+                default => $name,
+            };
+        }
+
+        if ($type instanceof \ReflectionUnionType) {
+            return implode('|', array_map(
+                fn($t) => self::normalizePhpDocType($t),
+                $type->getTypes()
+            ));
+        }
+
+        return 'mixed';
+    }
     
     /**
      * Discover all validation classes
@@ -95,6 +116,22 @@ class GeneratePHPDoc
         
         return $validations;
     }
+
+    private static function normalizeTypeString(string $type): string
+    {
+        $parts = explode('|', str_replace(' ', '', $type));
+
+        $parts = array_map(static function (string $p): string {
+            $p = ltrim($p, '\\');
+
+            return match ($p) {
+                'DateTime', 'DateTimeImmutable', 'DateTimeInterface' => '\DateTimeInterface',
+                default => $p,
+            };
+        }, $parts);
+
+        return implode('|', $parts);
+    }
     
     /**
      * Format method parameters for PHPDoc
@@ -108,7 +145,7 @@ class GeneratePHPDoc
         $formatted = [];
         
         foreach ($params as $param) {
-            $type = $param['type'];
+            $type = self::normalizeTypeString((string) $param['type']);
             $name = $param['name'];
             
             if ($param['required']) {
@@ -141,7 +178,7 @@ class GeneratePHPDoc
         }
         
         if (is_array($value)) {
-            return empty($value) ? '[]' : '[...]';
+            return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
         }
         
         return var_export($value, true);
@@ -247,7 +284,9 @@ class GeneratePHPDoc
             
             $paramSignature = [];
             foreach ($params as $param) {
-                $type = $param->getType() ? $param->getType()->getName() : 'mixed';
+                $type = $param->getType()
+                ? self::normalizePhpDocType($param->getType())
+                : 'mixed';
                 $paramName = $param->getName();
                 
                 if ($param->isOptional()) {

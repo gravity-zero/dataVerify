@@ -122,7 +122,7 @@
         "disposableEmail": {
             "type": "object",
             "title": "DisposableEmail",
-            "description": "Validates that an email is not from a disposable domain\n\n**Usage:**\n```php\n$verifier->field(\"test\")->disposableEmail([])\n```\n\n**Parameters:**\n- `disposables`: []",
+            "description": "Validates that an email is not from a disposable domain, can be overriden [\"@yourDisposableDomain\", ...]\n\n**Usage:**\n```php\n$verifier->field(\"email\")->disposableEmail\n```\n```php\n$verifier->field(\"email\")->disposableEmail([\"@yourDisposableDomain\", ...])\n```\n\n**Parameters:**\n- `disposables`: []",
             "x-category": "String",
             "properties": {
                 "disposables": {

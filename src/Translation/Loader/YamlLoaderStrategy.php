@@ -12,13 +12,18 @@ use Symfony\Component\Yaml\Yaml;
  */
 class YamlLoaderStrategy implements LoaderStrategyInterface
 {
-    public function supports(mixed $resource): bool
+    public function supports(array|string $resource): bool
     {
         return is_string($resource) 
             && (str_ends_with($resource, '.yaml') || str_ends_with($resource, '.yml'));
     }
 
-    public function load(mixed $resource, string $locale, string $domain = 'messages'): array
+    /**
+     * @return array<string,mixed>
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     */
+    public function load(array|string $resource, string $locale, string $domain = 'messages'): array
     {
         if (!class_exists(Yaml::class)) {
             throw new \RuntimeException(

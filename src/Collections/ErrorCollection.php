@@ -6,6 +6,7 @@ use Gravity\ValidationError;
 
 class ErrorCollection implements \IteratorAggregate, \Countable
 {
+    /** @var list<ValidationError> */
     private array $errors = [];
 
     public function add(ValidationError $error): void
@@ -23,12 +24,15 @@ class ErrorCollection implements \IteratorAggregate, \Countable
         return false;
     }
 
+    /**
+     * @return list<ValidationError>
+     */
     public function getErrorsByField(string $fieldName): array
     {
-        return array_filter(
+        return array_values(array_filter(
             $this->errors,
             fn(ValidationError $error) => $error->getField() === $fieldName
-        );
+        ));
     }
 
     public function getFirstError(): ?ValidationError
@@ -51,14 +55,20 @@ class ErrorCollection implements \IteratorAggregate, \Countable
         return empty($this->errors);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function toArray(): array
     {
         return array_map(
-            fn(ValidationError $error) => $error->toArray(),
+            fn(ValidationError $error): array => $error->toArray(),
             $this->errors
         );
     }
 
+    /**
+     * @return list<object>
+     */
     public function toObjects(): array
     {
         return array_map(
@@ -67,6 +77,9 @@ class ErrorCollection implements \IteratorAggregate, \Countable
         );
     }
 
+    /**
+     * @return ArrayIterator<int, ValidationError>
+     */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->errors);

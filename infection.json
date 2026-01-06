@@ -1,0 +1,22 @@
+{
+  "source": {
+    "directories": ["src"],
+    "excludes": ["Documentation"]
+  },
+  "logs": {
+    "text": "infection.log"
+  },
+  "mutators": {
+    "@default": true,
+    "ProtectedVisibility": {
+      "ignore": ["*"]
+    },
+    "PublicVisibility": {
+      "ignore": ["*"]
+    }
+  },
+  "phpUnit": {
+    "customPath": "vendor/bin/phpunit",
+    "configDir": "."
+  }
+}

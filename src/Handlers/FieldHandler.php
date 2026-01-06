@@ -8,13 +8,15 @@ use Gravity\Collections\SubFieldCollection;
 
 class FieldHandler implements ValidationHandlerInterface
 {
-    private string $name;
+
+    /** @var list<array{name: string, args: list<mixed>}> */
     private array $validations = [];
-    private SubFieldCollection $subFields;
-    private ?string $alias = null;
-    private ?string $errorMessage = null;
     /** @var ConditionalValidation[] */
     private array $conditionalValidations = [];
+    private SubFieldCollection $subFields;
+    private string $name;
+    private ?string $alias = null;
+    private ?string $errorMessage = null;
 
     public function __construct(string $name)
     {
@@ -27,11 +29,18 @@ class FieldHandler implements ValidationHandlerInterface
         $this->subFields->add($subField);
     }
 
+    /**
+     * @param list<mixed> $arguments
+     */
     public function addValidation(string $testName, array $arguments = []): void
     {
         $this->validations[] = ['name' => $testName, 'args' => $arguments];
     }
 
+    /**
+     * @param list<mixed> $args
+     * @param array{field: string, operator: string, value: mixed} $condition
+     */
     public function addConditionalValidation(string $testName, array $args, array $condition): void
     {
         $this->conditionalValidations[] = new ConditionalValidation(
@@ -43,8 +52,10 @@ class FieldHandler implements ValidationHandlerInterface
         );
     }
 
+    /** @return list<ConditionalValidation> */
     public function getConditionalValidations(): array { return $this->conditionalValidations; }
     public function getName(): string { return $this->name; }
+    /** @return list<array{name: string, args: list<mixed>}> */
     public function getValidations(): array { return $this->validations; }
     public function getSubFields(): SubFieldCollection  { return $this->subFields; }
     public function getAlias(): ?string { return $this->alias; }

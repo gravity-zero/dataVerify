@@ -4,8 +4,9 @@ namespace Gravity\Collections;
 
 use Gravity\Handlers\FieldHandler;
 
-class FieldCollection implements \IteratorAggregate, \Countable
+final class FieldCollection implements \IteratorAggregate, \Countable
 {
+    /** @var array<string, FieldHandler> */
     private array $fields = [];
 
     public function add(FieldHandler $field): void
@@ -33,6 +34,7 @@ class FieldCollection implements \IteratorAggregate, \Countable
         return null;
     }
 
+    /** @return list<string> */
     public function getFieldNames(): array
     {
         return array_map(
@@ -63,6 +65,9 @@ class FieldCollection implements \IteratorAggregate, \Countable
         return empty($this->fields);
     }
 
+    /**
+     * @return \ArrayIterator<string, FieldHandler>
+     */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->fields);
@@ -73,6 +78,7 @@ class FieldCollection implements \IteratorAggregate, \Countable
         return count($this->fields);
     }
 
+    /** @return array<string, FieldHandler> */
     public function toArray(): array
     {
         return $this->fields;

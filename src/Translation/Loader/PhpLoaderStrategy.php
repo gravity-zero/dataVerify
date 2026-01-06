@@ -6,16 +6,16 @@ use Gravity\Interfaces\LoaderStrategyInterface;
 
 class PhpLoaderStrategy implements LoaderStrategyInterface
 {
-    public function supports(mixed $resource): bool
+    public function supports(array|string $resource): bool
     {
-        if (!is_string($resource)) {
-            return false;
-        }
-        
-        return str_ends_with($resource, '.php');
+        return is_string($resource) && str_ends_with($resource, '.php');
     }
 
-    public function load(mixed $resource, string $locale, string $domain = 'messages'): array
+    /**
+     * @return array<string,mixed>
+     * @throws \InvalidArgumentException
+     */
+    public function load(array|string $resource, string $locale, string $domain = 'messages'): array
     {
         if (!is_string($resource)) {
             throw new \InvalidArgumentException('PhpLoaderStrategy expects a file path');
@@ -25,12 +25,20 @@ class PhpLoaderStrategy implements LoaderStrategyInterface
             throw new \InvalidArgumentException("Translation file not found: {$resource}");
         }
 
+        /** @var mixed $messages */
         $messages = require $resource;
 
         if (!is_array($messages)) {
             throw new \InvalidArgumentException("Translation file must return an array: {$resource}");
         }
 
+        foreach ($messages as $key => $_) {
+            if (!is_string($key)) {
+                throw new \InvalidArgumentException("Translation keys must be strings (invalid key in {$resource})");
+            }
+        }
+
+        /** @var array<string,mixed> $messages */
         return $messages;
     }
 }

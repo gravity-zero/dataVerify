@@ -126,10 +126,11 @@
     },
     "disposableEmail": {
         "name": "disposableEmail",
-        "description": "Validates that an email is not from a disposable domain",
+        "description": "Validates that an email is not from a disposable domain, can be overriden [\"@yourDisposableDomain\", ...]",
         "category": "String",
         "examples": [
-            "$verifier->field(\"test\")->disposableEmail([])"
+            "$verifier->field(\"email\")->disposableEmail",
+            "$verifier->field(\"email\")->disposableEmail([\"@yourDisposableDomain\", ...])"
         ],
         "parameters": [
             {

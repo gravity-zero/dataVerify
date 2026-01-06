@@ -5,8 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.4] - 2026-01-05
+## [1.0.5] - 2026-01-06
+### Tests
+- Restructured test suite into Unit/Integration/Regression hierarchy
+- Consolidated 7 duplicate tests across 4 test files
+- 502 tests, 924 assertions, 0 failures
 
+### Tooling
+- Configured PHPStan level max, resolved initial PHPDoc issues
+- Updated benchmark results (PHP 8.5.1 + OPcache)
+
+### Documentation
+- Updated README with new performance metrics
+- Generated comprehensive PHPDoc annotations
+
+## [1.0.4] - 2026-01-05
 ### Performance
 - **Static Translator Cache** - Eliminates repeated file I/O across validation instances
 - TranslationManager now uses process-wide cached translator instance

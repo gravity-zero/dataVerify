@@ -4,7 +4,9 @@ namespace Gravity\Interfaces;
 
 interface ValidationHandlerInterface
 {
+    /** @param list<mixed> $arguments */
     public function addValidation(string $testName, array $arguments = []): void;
+    /** @return list<array{name: string, args: list<mixed>}> */
     public function getValidations(): array;
     public function getAlias(): ?string;
     public function setAlias(string $alias): void;

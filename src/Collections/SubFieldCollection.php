@@ -4,8 +4,9 @@ namespace Gravity\Collections;
 
 use Gravity\Handlers\SubFieldHandler;
 
-class SubFieldCollection implements \IteratorAggregate, \Countable
+final class SubFieldCollection implements \IteratorAggregate, \Countable
 {
+    /** @var list<SubFieldHandler> */
     private array $subFields = [];
 
     public function add(SubFieldHandler $subField): void
@@ -13,6 +14,7 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         $this->subFields[] = $subField;
     }
 
+    /** @param list<string> $path */
     public function hasSubField(array $path): bool
     {
         foreach ($this->subFields as $subField) {
@@ -23,6 +25,7 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         return false;
     }
 
+    /** @param list<string> $path */
     public function getSubField(array $path): ?SubFieldHandler
     {
         foreach ($this->subFields as $subField) {
@@ -33,6 +36,7 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         return null;
     }
 
+    /** @return list<list<string>> */
     public function getSubFieldPaths(): array
     {
         return array_map(
@@ -41,6 +45,7 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         );
     }
 
+    /** @param list<string> $path */
     public function removeSubField(array $path): bool
     {
         foreach ($this->subFields as $index => $subField) {
@@ -63,7 +68,10 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         return empty($this->subFields);
     }
 
-    public function getIterator(): \ArrayIterator
+    /**
+     * @return \Traversable<int, SubFieldHandler>
+     */
+    public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->subFields);
     }
@@ -73,6 +81,7 @@ class SubFieldCollection implements \IteratorAggregate, \Countable
         return count($this->subFields);
     }
 
+    /** @return list<SubFieldHandler> */
     public function toArray(): array
     {
         return $this->subFields;

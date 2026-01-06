@@ -221,7 +221,7 @@ $dv->addTranslations([
 - ✅ **Fast** - ~9μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
 - ✅ **i18n ready** - Built-in translation support (EN, FR)
 - ✅ **Framework agnostic** - Works with WordPress, Laravel, Symfony, vanilla PHP
-- ✅ **Production tested** - 482 tests, 75% mutation score
+- ✅ **Production tested** - 500+ tests, 83% mutation score
 
 ## Documentation
 
@@ -244,10 +244,10 @@ $dv->addTranslations([
 
 DataVerify is designed for production with predictable sub-millisecond performance:
 ```
-Simple validation:       ~8.8μs   (99% < 9μs)
-Complex nested:          ~17.1μs  (99% < 18μs)
-Batch mode (100 fields):  1.15ms
-Fail-fast (100 fields):   0.23ms  (2.3x faster)
+Simple validation:       ~8.7μs   (99% < 9μs)
+Complex nested:          ~16.4μs  (99% < 18μs)
+Batch mode (100 fields): ~0.53ms
+Fail-fast (100 fields):  ~0.23ms  (2.3x faster)
 Memory usage:            ~4.9MB   (stable)
 ```
 

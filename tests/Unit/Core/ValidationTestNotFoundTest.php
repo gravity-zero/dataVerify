@@ -1,0 +1,94 @@
+<?php
+
+use PHPUnit\Framework\TestCase;
+use Gravity\DataVerify;
+use Gravity\Exceptions\ValidationTestNotFoundException;
+
+class ValidationTestNotFoundTest extends TestCase
+{
+    public function testFieldWithInvalidTestThrowsException()
+    {
+        $this->expectException(ValidationTestNotFoundException::class);
+        $this->expectExceptionMessage("Validation test 'fakeTest' not found.");
+        
+        $data = new stdClass();
+        $data->email = "test@example.com";
+        $data_verifier = new DataVerify($data);
+        
+        $data_verifier->field("email")->fakeTest;
+    }
+
+    public function testSubfieldWithInvalidTestThrowsException()
+    {
+        $this->expectException(ValidationTestNotFoundException::class);
+        $this->expectExceptionMessage("Validation test 'fakeSubTest' not found.");
+
+        $data = new stdClass();
+        $data->passwords = new stdClass();
+        $data->passwords->field1 = new stdClass();
+        $data->passwords->field1->field2 = "Some text";
+
+        $data_verifier = new DataVerify($data);
+        $data_verifier
+            ->field("passwords")->object
+                ->subfield("field1", "field2")->fakeSubTest;
+    }
+
+    public function testFieldWithEmptyTestNameThrowsException()
+    {
+        $this->expectException(ValidationTestNotFoundException::class);
+        $this->expectExceptionMessage("Validation test ' ' not found.");
+
+        $data = new \stdClass();
+        $data->email = "test@example.com";
+
+        $data_verifier = new DataVerify($data);
+        $data_verifier->field("email")->{" "}();
+
+        $data_verifier->verify();
+    }
+
+    public function testValidationNotFoundExceptionHasZeroCode(): void
+    {
+        $exception = new ValidationTestNotFoundException('test');
+        
+        $this->assertEquals(0, $exception->getCode());
+    }
+
+    public function testValidationNotFoundExceptionAcceptsCustomCode(): void
+    {
+        $exception = new ValidationTestNotFoundException('test', 42);
+        
+        $this->assertEquals(42, $exception->getCode());
+    }
+
+    public function testInternalMethodNameMustBeCorrect(): void
+    {
+        $data = new stdClass();
+        $data->value = "not-numeric";
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('value')->numeric;
+        
+        $this->assertFalse($verifier->verify());
+        $errors = $verifier->getErrors();
+        
+        $this->assertCount(1, $errors);
+        $this->assertEquals('numeric', $errors[0]['test']);
+    }
+
+    public function testInternalMethodNameIsUsed(): void
+    {
+        $data = new stdClass();
+        $data->value = 'not-numeric';
+        
+        $verifier = new DataVerify($data);
+        $verifier->field('value')->numeric;
+        
+        $this->assertFalse($verifier->verify());
+        $errors = $verifier->getErrors();
+        
+        $this->assertEquals('numeric', $errors[0]['test']);
+        $this->assertStringContainsString('numeric', $errors[0]['message']);
+    }
+}

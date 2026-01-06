@@ -225,7 +225,11 @@ $verifier->field("test")->maxLength(20)
 </details>
 
 <details>
-<summary><code>disposableEmail</code> - Validates that an email is not from a disposable domain</summary>
+<summary><code>disposableEmail</code> - Validates that an email is not from a disposable domain, can be overri...</summary>
+
+**Description:**
+
+Validates that an email is not from a disposable domain, can be overriden ["@yourDisposableDomain", ...]
 
 **Parameters:**
 
@@ -237,7 +241,11 @@ $verifier->field("test")->maxLength(20)
 **Usage:**
 
 ```php
-$verifier->field("test")->disposableEmail([])
+$verifier->field("email")->disposableEmail
+```
+
+```php
+$verifier->field("email")->disposableEmail(["@yourDisposableDomain", ...])
 ```
 
 </details>

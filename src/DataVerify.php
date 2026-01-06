@@ -24,7 +24,7 @@ use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidation
  * @property DataVerify $containsSpecialCharacter Validates that a string contains at least one special character
  * @property DataVerify $containsUpper Validates that a string contains at least one uppercase letter
  * @property DataVerify $date Validates that a value is a valid date in the specified format. Performs strict validation
- * @property DataVerify $disposableEmail Validates that an email is not from a disposable domain
+ * @property DataVerify $disposableEmail Validates that an email is not from a disposable domain, can be overriden ["@yourDisposableDomain", ...]
  * @property DataVerify $disposableUrlDomain Validates that a URL is not from a disposable/temporary domain (URL shorteners, free hosting, etc.)
  * @property DataVerify $email Validates that a value is a valid email address
  * @property DataVerify $fileExists Validates that a file exists at the given path
@@ -39,10 +39,10 @@ use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidation
  * @property DataVerify $url Validates that a value is a valid URL with configurable schemes and TLD requirement
  * @property DataVerify $then Activate conditional validation mode
  *
- * @method DataVerify between(DateTime|string|int|float $min, DateTime|string|int|float $max) Validates that a value is between two bounds. Supports numeric values and DateTime objects
+ * @method DataVerify between(\DateTimeInterface|string|int|float $min, \DateTimeInterface|string|int|float $max) Validates that a value is between two bounds. Supports numeric values and DateTime objects
  * @method DataVerify boolean(bool $strict = true) Validates that a value is a boolean. In strict mode (default), only true/false are accepted
  * @method DataVerify date(string $format = 'Y-m-d') Validates that a value is a valid date in the specified format. Performs strict validation
- * @method DataVerify disposableEmail(array $disposables = []) Validates that an email is not from a disposable domain
+ * @method DataVerify disposableEmail(array $disposables = []) Validates that an email is not from a disposable domain, can be overriden ["@yourDisposableDomain", ...]
  * @method DataVerify disposableUrlDomain(array $disposables = []) Validates that a URL is not from a disposable/temporary domain (URL shorteners, free hosting, etc.)
  * @method DataVerify fileMime(array|string $mime) Validates that a file has an allowed MIME type
  * @method DataVerify greaterThan(mixed $min) Validates that a value is greater than a specified limit
@@ -53,7 +53,7 @@ use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidation
  * @method DataVerify minLength(int $min) Validates that a string has a minimum length
  * @method DataVerify notIn(object|array $forbidden) Validates that a value does not exist in a forbidden list or as an object property
  * @method DataVerify regex(string $pattern) Validates that a value matches a regular expression pattern. Warnings are suppressed
- * @method DataVerify url(array $schemes = [...], bool $requireTld = true) Validates that a value is a valid URL with configurable schemes and TLD requirement
+ * @method DataVerify url(array $schemes = ["http","https"], bool $requireTld = true) Validates that a value is a valid URL with configurable schemes and TLD requirement
  */
 class DataVerify
 {
@@ -70,6 +70,7 @@ class DataVerify
     private DataTraverser $dataTraverser;
     private LazyValidationRegistry $lazyRegistry;
 
+    /** @param array<string, mixed>|object $data */
     public function __construct(array|object $data)
     {
         $this->data = $data;
@@ -357,6 +358,7 @@ class DataVerify
 
     /**
      * List all available validations
+     * @return list<string>
      */
     public function listValidations(?string $category = null): array
     {
