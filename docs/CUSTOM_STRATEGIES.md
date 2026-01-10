@@ -17,6 +17,9 @@ Extend DataVerify with your own validation logic through custom strategies.
 
 ## Quick Start
 ```php
+use Gravity\DataVerify;
+use Gravity\Interfaces\ValidationStrategyInterface;
+
 // 1. Create strategy
 // The #[ValidationRule] attribute enables auto-documentation generation and IDE stub creation (See IDE Autocompletion)
 #[ValidationRule(
