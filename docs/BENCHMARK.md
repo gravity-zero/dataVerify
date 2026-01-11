@@ -32,11 +32,25 @@ make benchmark-stats    # With P50/P95/P99 percentiles
 
 **Memory:** ~4.9MB (stable, no leaks)
 
+### FrankenPHP Worker Mode
+
+Tested for long-running process stability:
+
+| Metric | Result |
+|--------|--------|
+| Requests | 3M+ |
+| Memory | 2MB stable (Δ0 after warmup) |
+| Throughput | ~3400 req/s (4 workers) |
+| Errors | 0 |
+
+✅ **Production-ready** for worker mode - no memory leaks detected.
+
 **Key Insights:**
 - ✅ **99% of validations complete in <17μs** (sub-millisecond)
 - ✅ **Very low variance** - P99 tightly clustered around the mean
 - ✅ **Fail-fast mode 2.3x faster** when you need speed
 - ✅ **Conditional skip is fast** - unused validations add minimal overhead
 - ✅ **Static translator cache** eliminates file I/O overhead
+- ✅ **Worker-mode stable** - no memory growth over millions of requests
 
 *Benchmarks: [PHPBench 1.4.3](https://github.com/phpbench/phpbench) • PHP 8.5.1 • OPcache enabled*
