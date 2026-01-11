@@ -221,6 +221,7 @@ $dv->addTranslations([
 - ✅ **Fast** - ~9μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
 - ✅ **i18n ready** - Built-in translation support (EN, FR)
 - ✅ **Framework agnostic** - Works with WordPress, Laravel, Symfony, vanilla PHP
+- ✅ **Worker-mode ready** - Tested with FrankenPHP, stable memory over 3M+ requests
 - ✅ **Production tested** - 500+ tests, 83% mutation score
 
 ## Documentation
