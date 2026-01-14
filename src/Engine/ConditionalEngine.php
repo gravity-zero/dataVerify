@@ -10,6 +10,10 @@ use Gravity\Enums\ConditionalOperator;
  * 
  * Responsible for conditional validation logic (when/and/or/then).
  * Manages condition chains and evaluates them against data.
+ * 
+ * Modified to support deferred evaluation:
+ * - Conditions are stored during construction
+ * - Evaluated during verify() phase
  */
 class ConditionalEngine
 {
@@ -21,6 +25,24 @@ class ConditionalEngine
     public function __construct(
         private DataTraverser $dataTraverser
     ) {}
+    
+    /**
+     * Get current pending conditions for storage
+     * Used to attach conditions to validations for deferred evaluation
+     * 
+     * @return array{conditions: array, operator: ConditionOperator}|null
+     */
+    public function getCurrentConditions(): ?array
+    {
+        if ($this->pendingConditions === null) {
+            return null;
+        }
+        
+        return [
+            'conditions' => $this->pendingConditions,
+            'operator' => $this->conditionOperator
+        ];
+    }
 
     /**
      * Start a new conditional chain
@@ -29,14 +51,18 @@ class ConditionalEngine
     {
         $this->validateOperator($operator);
         
+        // If we're in then mode, finalize the current block
+        if ($this->thenMode) {
+            $this->finalizeBlock();
+        }
+        
+        // If there are pending conditions not in then mode, that's an error
         if ($this->pendingConditions !== null && !$this->thenMode) {
             throw new \LogicException(
                 "Previous 'when()' was not followed by 'then'. " .
                 "Complete the conditional validation before starting a new one."
             );
         }
-
-        $this->reset();
         
         $this->pendingConditions = [
             [
@@ -226,6 +252,18 @@ class ConditionalEngine
      * Reset conditional state (called after validation or on error)
      */
     public function reset(): void
+    {
+        $this->pendingConditions = null;
+        $this->conditionResult = null;
+        $this->thenMode = false;
+        $this->conditionOperator = ConditionOperator::AND;
+    }
+    
+    /**
+     * Finalize current conditional block without full reset
+     * Used when starting a new when/field/subfield while in then mode
+     */
+    public function finalizeBlock(): void
     {
         $this->pendingConditions = null;
         $this->conditionResult = null;

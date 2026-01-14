@@ -472,4 +472,148 @@ class DataVerifyBench
         $dv->field('test')->string;
         $dv->verify();
     }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalDefaultPlusConditional(): void
+    {
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->id = 123;
+        $data->user->password = 'StrongP@ss123!';
+        
+        $dv = new DataVerify($data);
+        $dv->field('user')->object
+           ->subfield('password')
+              ->minLength(8)                      // Default rule
+              ->containsUpper                     // Default rule
+              ->when('user.id', '!=', null)
+                 ->then->required;                // Conditional rule
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalMultipleBlocks(): void
+    {
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->id = 123;
+        $data->user->role = 'admin';
+        $data->user->password = 'VeryStrongP@ss123!';
+        
+        $dv = new DataVerify($data);
+        $dv->field('user')->object
+           ->subfield('password')
+              ->minLength(8)                      // Default
+              ->when('user.id', '!=', null)
+                 ->then->required                 // Block 1
+              ->when('user.role', '=', 'admin')
+                 ->then->minLength(16)            // Block 2
+                    ->containsSpecialCharacter;   // Block 2
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalNotTriggered(): void
+    {
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->id = null;
+        $data->user->password = 'Short1!';
+        
+        $dv = new DataVerify($data);
+        $dv->field('user')->object
+           ->subfield('password')
+              ->minLength(8)                      // Default - will fail
+              ->containsUpper                     // Default - passes
+              ->when('user.id', '!=', null)
+                 ->then->required                 // NOT triggered
+                    ->minLength(16);              // NOT triggered
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalAPIPostPatch(): void
+    {
+        // Simulates PATCH scenario
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->id = 456;
+        $data->user->email = 'update@example.com';
+        // password optional in PATCH
+        
+        $dv = new DataVerify($data);
+        $dv->field('user')->object
+           ->subfield('email')
+              ->email                             // Always check format
+              ->when('user.id', '!=', null)
+                 ->then->required                 // Required if updating
+           ->subfield('password')
+              ->minLength(12)                     // Always check if present
+              ->containsUpper                     // Always check if present
+              ->when('user.id', '!=', null)
+                 ->then->required;                // Required if updating
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalAcrossFields(): void
+    {
+        $data = new stdClass();
+        $data->x = 1;
+        $data->y = 2;
+        $data->field1 = 'value1';
+        $data->field2 = 'value2';
+        
+        $dv = new DataVerify($data);
+        $dv->field('field1')
+              ->string
+              ->when('x', '=', 1)
+                 ->then->required
+           ->field('field2')                      // Terminates previous block
+              ->string
+              ->when('y', '=', 2)
+                 ->then->required;
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchDeferredConditionalComplex(): void
+    {
+        $data = new stdClass();
+        $data->tier = 'premium';
+        $data->status = 'active';
+        $data->features = ['api', 'support'];
+        
+        $dv = new DataVerify($data);
+        $dv->field('features')
+              ->array                             // Default
+              ->when('tier', '=', 'premium')
+              ->and('status', '=', 'active')
+                 ->then->required;                // Conditional with AND
+        
+        $dv->verify();
+    }
 }

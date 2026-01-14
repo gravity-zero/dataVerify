@@ -114,8 +114,16 @@ class ValidationOrchestrator
         string $path,
         bool $batchMode
     ): void {
-        // Regular validations
-        foreach ($handler->getValidations() as $validation) {
+        // Use new getAllValidations() method that includes conditions
+        foreach ($handler->getAllValidations() as $validation) {
+            // Check if validation has conditions
+            if ($validation['conditions'] !== null) {
+                // Evaluate conditions
+                if (!$this->evaluateConditions($validation['conditions'])) {
+                    continue; // Skip this validation
+                }
+            }
+            
             $this->executeValidation($handler, $validation['name'], $validation['args'], $value, $path);
             
             if ($this->shouldStopValidation($batchMode)) {
@@ -126,7 +134,7 @@ class ValidationOrchestrator
             }
         }
 
-        // Conditional validations
+        // Keep old conditional validations for backward compatibility
         foreach ($handler->getConditionalValidations() as $conditional) {
             if ($this->shouldExecuteConditional($conditional)) {
                 $this->executeValidation($handler, $conditional->validation, $conditional->args, $value, $path);
@@ -139,6 +147,35 @@ class ValidationOrchestrator
                 }
             }
         }
+    }
+    
+    /**
+     * Evaluate conditions for a validation
+     * 
+     * @param array{conditions: array, operator: \Gravity\Enums\ConditionOperator} $conditionsData
+     */
+    private function evaluateConditions(array $conditionsData): bool
+    {
+        $results = [];
+        
+        foreach ($conditionsData['conditions'] as $condition) {
+            $fieldValue = $this->dataTraverser->getFieldValue($condition['field']);
+            $result = $this->conditionalEngine->evaluateSingleCondition(
+                $fieldValue,
+                $condition['operator'],
+                $condition['value']
+            );
+            $results[] = $result;
+        }
+        
+        if (count($results) === 1) {
+            return $results[0];
+        }
+        
+        return match($conditionsData['operator']) {
+            \Gravity\Enums\ConditionOperator::AND => !in_array(false, $results, true),
+            \Gravity\Enums\ConditionOperator::OR => in_array(true, $results, true),
+        };
     }
 
     /**

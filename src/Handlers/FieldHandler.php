@@ -13,6 +13,8 @@ class FieldHandler implements ValidationHandlerInterface
     private array $validations = [];
     /** @var ConditionalValidation[] */
     private array $conditionalValidations = [];
+    /** @var list<array{name: string, args: list<mixed>, conditions: array{conditions: array, operator: \Gravity\Enums\ConditionOperator}|null}> */
+    private array $allValidations = [];
     private SubFieldCollection $subFields;
     private string $name;
     private ?string $alias = null;
@@ -31,10 +33,20 @@ class FieldHandler implements ValidationHandlerInterface
 
     /**
      * @param list<mixed> $arguments
+     * @param array{conditions: array, operator: \Gravity\Enums\ConditionOperator}|null $conditions
      */
-    public function addValidation(string $testName, array $arguments = []): void
+    public function addValidation(string $testName, array $arguments = [], ?array $conditions = null): void
     {
-        $this->validations[] = ['name' => $testName, 'args' => $arguments];
+        $this->allValidations[] = [
+            'name' => $testName, 
+            'args' => $arguments,
+            'conditions' => $conditions
+        ];
+        
+        // Keep old API for backward compatibility
+        if ($conditions === null) {
+            $this->validations[] = ['name' => $testName, 'args' => $arguments];
+        }
     }
 
     /**
@@ -57,6 +69,8 @@ class FieldHandler implements ValidationHandlerInterface
     public function getName(): string { return $this->name; }
     /** @return list<array{name: string, args: list<mixed>}> */
     public function getValidations(): array { return $this->validations; }
+    /** @return list<array{name: string, args: list<mixed>, conditions: array|null}> */
+    public function getAllValidations(): array { return $this->allValidations; }
     public function getSubFields(): SubFieldCollection  { return $this->subFields; }
     public function getAlias(): ?string { return $this->alias; }
     public function setAlias(string $alias): void { $this->alias = $alias; }

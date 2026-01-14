@@ -159,6 +159,45 @@ $dv->field('user')->required->object
 
 </details>
 
+<details>
+<summary><strong>Conditional Block Terminators</strong></summary>
+
+**New in v1.1.0:** Conditional blocks are automatically terminated by specific actions, allowing cleaner syntax:
+
+**Terminators:**
+1. `->when()` - Starts new conditional block, terminates previous one
+2. `->field()` - Starts new field, terminates any active block
+3. `->subfield()` - Starts new subfield, terminates any active block
+
+```php
+// Example: Multiple blocks on same field
+$dv->field('password')
+   ->minLength(8)                      // Unconditional
+   ->when('user.id', '!=', null)
+      ->then->required                 // Block 1
+   ->when('user.role', '=', 'admin')   // Terminates Block 1, starts Block 2
+      ->then->minLength(16);           // Block 2
+
+// Example: Blocks across fields
+$dv->field('email')
+   ->when('user.id', '!=', null)
+      ->then->required                 // Conditional on email
+   ->field('phone')                    // Terminates block, starts new field
+      ->required;                      // Unconditional on phone
+
+// Example: Blocks across subfields  
+$dv->field('parent')->object
+   ->subfield('sub1')
+      ->when('x', '=', 1)
+         ->then->required              // Conditional on sub1
+   ->subfield('sub2')                  // Terminates block
+      ->string;                        // Unconditional on sub2
+```
+
+**No explicit terminator needed** - blocks end naturally at field boundaries.
+
+</details>
+
 ---
 
 ## Restrictions
@@ -286,20 +325,93 @@ $dv->field('kyc_document')
 </details>
 
 <details>
-<summary><strong>Mix Normal and Conditional</strong></summary>
+<summary><strong>API REST - POST vs PATCH</strong></summary>
+
+**New in v1.1.0:** Perfect for differentiating create (POST) vs update (PATCH) validation:
 
 ```php
-$dv->field('email')
-   ->required      // ← Always required
-   ->email         // ← Always validated
-   
-   ->field('phone')
-   ->when('contact_preference', '=', 'phone')
-   ->then->required  // ← Only when condition true
-   ->regex('/^\+?[1-9]\d{1,14}$/');  // ← Always validated if present
+// POST /users - All fields required
+$dv->field('user')->required->object
+   ->subfield('email')->required->email
+   ->subfield('password')->required->minLength(12)->containsUpper;
+
+// PATCH /users/:id - Conditional validation
+$dv->field('user')->object
+   ->subfield('email')
+      ->email                           // Format always checked if present
+      ->when('user.id', '!=', null)
+         ->then->required               // Required only if updating
+   ->subfield('password')
+      ->minLength(12)                   // Constraints always checked if present
+      ->containsUpper
+      ->when('user.id', '!=', null)
+         ->then->required;              // Required only if updating
+
+// In PATCH, fields are optional but must be valid if provided
 ```
 
-**Note:** Validations **after** `then` only run if condition is true. Validations **before** `when()` always run.
+**Bonus - Role-based validation:**
+```php
+$dv->field('password')
+   ->minLength(8)                       // All users
+   ->containsUpper                      // All users
+   ->when('user.role', '=', 'admin')
+      ->then->minLength(16)             // Admins need stronger passwords
+         ->containsSpecialCharacter;
+```
+
+</details>
+
+<details>
+<summary><strong>Mix Normal and Conditional</strong></summary>
+
+**New in v1.1.0:** Conditional blocks now support **deferred evaluation** - conditions are evaluated during `verify()` rather than during construction. This enables more intuitive syntax where default rules come first, followed by conditional rules.
+
+```php
+// Default rules + conditional rules
+$dv->field('password')
+   ->minLength(8)         // ← Always required
+   ->containsUpper        // ← Always required
+   ->when('user.id', '!=', null)
+      ->then->required    // ← Only when user exists
+         ->minLength(12); // ← Only when user exists
+
+// Multiple conditional blocks
+$dv->field('password')
+   ->minLength(8)                      // ← Always
+   ->when('user.id', '!=', null)
+      ->then->required                 // ← Block 1: if user exists
+   ->when('user.role', '=', 'admin')   // ← Block 2: if admin
+      ->then->minLength(16)            // ← Block 2: stronger requirements
+         ->containsSpecialCharacter;   // ← Block 2
+```
+
+**How conditional blocks work:**
+
+A conditional block starts with `when()` and includes all validations until:
+- Another `when()` is called (starts new block)
+- Another `field()` or `subfield()` is called (ends block)
+- End of chain (implicit termination)
+
+**Example - Separating blocks:**
+```php
+$dv->field('email')
+   ->email                              // ← Unconditional
+   ->when('user.id', '!=', null)
+      ->then->required                  // ← Conditional block
+   ->field('phone')                     // ← Terminates previous block
+      ->regex('/^\+?[1-9]\d{1,14}$/');  // ← Unconditional on new field
+```
+
+**Old syntax still works:**
+```php
+// Traditional approach (still valid)
+$dv->field('email')
+   ->when('contact_preference', '=', 'email')
+   ->then->required->email;
+
+// All validations after 'then' are conditional
+```
 
 </details>
 

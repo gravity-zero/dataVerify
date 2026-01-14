@@ -1380,4 +1380,64 @@ class ConditionalValidationTest extends TestCase
         $this->assertCount(1, $errors);
         $this->assertEquals('config.sub2', $errors[0]['field']);
     }
+
+    public function testRequiredAtEndOfChainAfterOtherValidatorOnSubfield(): void
+    {
+        $data = new stdClass();
+        $data->config = new stdClass();
+        $data->config->enabled = false;
+        $data->config->sub1 = '';
+        $data->config->sub2 = null;
+
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('config')->required->object
+                ->subfield('sub1')
+                ->when('config.enabled', '=', true)
+                ->then->required
+
+                ->subfield('sub2')
+                ->email
+                ->required;
+
+        $this->assertFalse(
+            $verifier->verify(),
+            'sub2 must fail because required is at the end of the chain (after email)'
+        );
+
+        $errors = $verifier->getErrors();
+        $this->assertCount(1, $errors);
+        $this->assertEquals('config.sub2', $errors[0]['field']);
+
+        $this->assertEquals('The field config.sub2 is required', $errors[0]['message']);
+    }
+
+    public function testRequiredAtEndOfChainWithPresentButInvalidObjectValue(): void
+    {
+        $data = new stdClass();
+        $data->config = new stdClass();
+        $data->config->enabled = false;
+        $data->config->sub1 = '';
+        $data->config->sub2 = new stdClass();
+
+        $verifier = new DataVerify($data);
+        $verifier
+            ->field('config')->required->object
+                ->subfield('sub1')
+                ->when('config.enabled', '=', true)
+                ->then->required
+
+                ->subfield('sub2')
+                ->email
+                ->required;
+
+        $this->assertFalse($verifier->verify());
+
+        $errors = $verifier->getErrors();
+
+        $this->assertCount(2, $errors);
+        $this->assertEquals('config.sub2', $errors[0]['field']);
+        $this->assertEquals('config.sub2', $errors[1]['field']);
+    }
+
 }

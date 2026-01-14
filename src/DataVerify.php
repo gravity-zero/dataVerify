@@ -9,7 +9,7 @@ use Gravity\Collections\{FieldCollection, ErrorCollection};
 use Gravity\Handlers\{FieldHandler, SubFieldHandler};
 use Gravity\Interfaces\{DataVerifyInterface, ValidationStrategyInterface, TranslatorInterface};
 use Gravity\Translation\TranslationManager;
-use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidationRegistry};
+use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidationRegistry, RuleSetRegistry, RuleSetBuilder, RuleSet};
 
 /**
  * Class DataVerify
@@ -99,13 +99,16 @@ class DataVerify
 
     public function field(string $name): self
     {
+        // Finalize conditional block if in then mode
+        if ($this->conditionalEngine->isThenMode()) {
+            $this->conditionalEngine->finalizeBlock();
+        }
+        
         if ($this->conditionalEngine->hasPendingConditions() && !$this->conditionalEngine->isThenMode()) {
             throw new \LogicException(
-                "Incomplete conditional validation. Use 'then' after 'when()' before starting a new subfield."
+                "Incomplete conditional validation. Use 'then' after 'when()' before starting a new field."
             );
         }
-
-        $this->conditionalEngine->reset();
 
         $field = new FieldHandler($name);
         $this->context->push($field);
@@ -120,15 +123,16 @@ class DataVerify
 
     public function subfield(string ...$path): self
     {
+        // Finalize conditional block if in then mode
+        if ($this->conditionalEngine->isThenMode()) {
+            $this->conditionalEngine->finalizeBlock();
+        }
 
         if ($this->conditionalEngine->hasPendingConditions() && !$this->conditionalEngine->isThenMode()) {
             throw new \LogicException(
                 "Incomplete conditional validation. Use 'then' after 'when()' before starting a new subfield."
             );
         }
-
-        $this->conditionalEngine->reset();
-
 
         $field = $this->context->lastField();
 
@@ -233,15 +237,14 @@ class DataVerify
             throw new ValidationTestNotFoundException($method);
         }
 
+        // Get current conditions if in then mode
+        $conditions = null;
         if ($this->conditionalEngine->isThenMode()) {
-            if($this->conditionalEngine->evaluateConditions()){
-                $handler->addValidation($method, $args);
-            }
-            
-            return $this;
+            $conditions = $this->conditionalEngine->getCurrentConditions();
         }
 
-        $handler->addValidation($method, $args);
+        // Add validation with conditions (will be evaluated during verify())
+        $handler->addValidation($method, $args, $conditions);
         
         return $this;
     }

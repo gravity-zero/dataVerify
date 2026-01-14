@@ -10,6 +10,8 @@ class SubFieldHandler implements ValidationHandlerInterface
     private array $validations = [];
     /** @var ConditionalValidation[] */
     private array $conditionalValidations = [];
+    /** @var list<array{name: string, args: list<mixed>, conditions: array{conditions: array, operator: \Gravity\Enums\ConditionOperator}|null}> */
+    private array $allValidations = [];
     private ?string $alias = null;
     private ?string $errorMessage = null;
     private array $path;
@@ -23,10 +25,20 @@ class SubFieldHandler implements ValidationHandlerInterface
 
     /**
      * @param list<mixed> $arguments
+     * @param array{conditions: array, operator: \Gravity\Enums\ConditionOperator}|null $conditions
      */
-    public function addValidation(string $testName, array $arguments = []): void
+    public function addValidation(string $testName, array $arguments = [], ?array $conditions = null): void
     {
-        $this->validations[] = ['name' => $testName, 'args' => $arguments];
+        $this->allValidations[] = [
+            'name' => $testName, 
+            'args' => $arguments,
+            'conditions' => $conditions
+        ];
+        
+        // Keep old API for backward compatibility
+        if ($conditions === null) {
+            $this->validations[] = ['name' => $testName, 'args' => $arguments];
+        }
     }
 
     /**
@@ -48,6 +60,8 @@ class SubFieldHandler implements ValidationHandlerInterface
     public function getPath(): array { return $this->path; }
     
     public function getValidations(): array { return $this->validations; }
+    /** @return list<array{name: string, args: list<mixed>, conditions: array|null}> */
+    public function getAllValidations(): array { return $this->allValidations; }
     public function getAlias(): ?string { return $this->alias; }
     public function setAlias(string $alias): void { $this->alias = $alias; }
     public function getErrorMessage(): ?string { return $this->errorMessage; }
