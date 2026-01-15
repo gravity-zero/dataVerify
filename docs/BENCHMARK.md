@@ -51,6 +51,19 @@ make p99                # With P50/P95/P99 percentiles
 
 **Memory:** ~2MB
 
+### FrankenPHP Worker Mode
+
+Tested for long-running process stability:
+
+| Metric | Result |
+|--------|--------|
+| Requests | 3M+ |
+| Memory | 2MB stable (Δ0 after warmup) |
+| Throughput | ~3400 req/s (4 workers) |
+| Errors | 0 |
+
+✅ **Production-ready** for worker mode - no memory leaks detected.
+
 **Key Insights:**
 - ✅ 99% of validations complete in <20μs
 - ✅ Fail-fast mode is 2.2x faster than batch mode
