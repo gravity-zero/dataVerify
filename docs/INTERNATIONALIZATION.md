@@ -1,5 +1,11 @@
 # Internationalization (i18n)
 
+**[← Back to Main Documentation](../README.md)**
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | [Custom Strategies](CUSTOM_STRATEGIES.md) | [Error Handling](ERROR_HANDLING.md) | **Internationalization**(INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+---
+
 DataVerify includes a built-in translation system for validation error messages. Built-in languages (English, French) are automatically loaded - just set the locale.
 
 ## Table of Contents
@@ -403,3 +409,10 @@ class MyStrategy extends ValidationStrategy
 - **[Custom Strategies](CUSTOM_STRATEGIES.md)** - Parameter mapping for custom validations
 - **[Error Handling](ERROR_HANDLING.md)** - Working with translated errors
 - **[Validation Rules](VALIDATIONS.md)** - All validation rules
+
+
+---
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | [Custom Strategies](CUSTOM_STRATEGIES.md) | [Error Handling](ERROR_HANDLING.md) | [Internationalization](INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+**[← Back to Main Documentation](../README.md)**

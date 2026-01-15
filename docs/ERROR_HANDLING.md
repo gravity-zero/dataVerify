@@ -1,5 +1,11 @@
 # Error Handling
 
+**[← Back to Main Documentation](../README.md)**
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | [Custom Strategies](CUSTOM_STRATEGIES.md) | **Error Handling**(ERROR_HANDLING.md) | [Internationalization](INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+---
+
 DataVerify provides flexible error retrieval with detailed information about validation failures.
 
 ## Table of Contents
@@ -394,3 +400,10 @@ if (!$dv->verify()) {
 - **[Internationalization](INTERNATIONALIZATION.md)** - Multi-language error messages
 - **[Validation Rules](VALIDATIONS.md)** - All available validation rules
 - **[Custom Strategies](CUSTOM_STRATEGIES.md)** - Error messages for custom validations
+
+
+---
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | [Custom Strategies](CUSTOM_STRATEGIES.md) | [Error Handling](ERROR_HANDLING.md) | [Internationalization](INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+**[← Back to Main Documentation](../README.md)**

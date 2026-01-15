@@ -285,3 +285,172 @@ if (!$dv12->verify()) {
 echo "\n";
 
 echo "=== End of examples ===\n";
+
+// Example 13: Deferred conditional evaluation - default + conditional rules
+echo "13. Mix default and conditional rules (new in v1.1.0)\n";
+$data13 = new stdClass();
+$data13->user = new stdClass();
+$data13->user->id = 123;
+$data13->user->password = 'weak';
+
+$dv13 = new DataVerify($data13);
+$dv13
+    ->field('user')->required->object
+        ->subfield('password')
+            ->minLength(8)                      // Always applied
+            ->containsUpper                     // Always applied
+            ->when('user.id', '!=', null)
+                ->then->required;               // Applied if user.id exists
+
+if (!$dv13->verify()) {
+    echo "   ✗ Password must be 8+ chars with uppercase, and required for existing users\n";
+} else {
+    echo "   ✓ Validation passed\n";
+}
+echo "\n";
+
+// Example 14: Multiple conditional blocks on same field
+echo "14. Multiple conditional blocks on same field\n";
+$data14 = new stdClass();
+$data14->user = new stdClass();
+$data14->user->id = 456;
+$data14->user->role = 'admin';
+$data14->user->password = 'ShortPass1!';
+
+$dv14 = new DataVerify($data14);
+$dv14
+    ->field('user')->required->object
+        ->subfield('password')
+            ->minLength(8)                      // Default
+            ->when('user.id', '!=', null)
+                ->then->required                // Block 1: required for existing users
+            ->when('user.role', '=', 'admin')
+                ->then->minLength(16)           // Block 2: 16+ chars for admins
+                    ->containsSpecialCharacter; // Block 2: special char for admins
+
+if (!$dv14->verify()) {
+    echo "   ✗ Admin password requires 16+ characters with special character\n";
+    foreach ($dv14->getErrors() as $error) {
+        echo "     - {$error['field']}: {$error['test']} failed\n";
+    }
+} else {
+    echo "   ✓ Validation passed\n";
+}
+echo "\n";
+
+// Example 15: Conditional blocks across multiple fields
+echo "15. Conditional blocks across multiple fields\n";
+$data15 = new stdClass();
+$data15->subscription = new stdClass();
+$data15->subscription->plan = 'enterprise';
+$data15->subscription->users = 5;
+$data15->subscription->payment_method = 'invoice';
+$data15->subscription->billing_email = '';
+$data15->subscription->card_number = '';
+
+$dv15 = new DataVerify($data15);
+$dv15
+    ->field('subscription')->required->object
+        ->subfield('billing_email')
+            ->email
+            ->when('subscription.plan', '=', 'enterprise')
+                ->then->required
+        ->subfield('card_number')
+            ->when('subscription.payment_method', '=', 'card')
+                ->then->required->regex('/^\d{16}$/')
+        ->subfield('users')
+            ->int
+            ->when('subscription.plan', 'in', ['pro', 'enterprise'])
+                ->then->required->between(1, 1000);
+
+if (!$dv15->verify()) {
+    echo "   ✗ Enterprise subscription validation failed:\n";
+    foreach ($dv15->getErrors() as $error) {
+        echo "     - {$error['field']}: {$error['message']}\n";
+    }
+} else {
+    echo "   ✓ Validation passed\n";
+}
+echo "\n";
+
+// Example 16: Conditional with complex AND/OR combinations
+echo "16. Complex AND/OR combinations\n";
+$data16 = new stdClass();
+$data16->tier = 'premium';
+$data16->status = 'active';
+$data16->country = 'FR';
+$data16->features = [];
+
+$dv16 = new DataVerify($data16);
+$dv16
+    ->field('features')
+        ->array
+        ->when('tier', '=', 'premium')
+        ->and('status', '=', 'active')
+        ->and('country', 'in', ['FR', 'DE', 'BE'])
+        ->then->required;
+
+if (!$dv16->verify()) {
+    echo "   ✗ Premium features required for active premium users in EU\n";
+} else {
+    echo "   ✓ Validation passed\n";
+}
+echo "\n";
+
+// Example 17: API REST use case - POST vs PATCH
+echo "17. API REST - POST vs PATCH pattern\n";
+
+// POST /users - creating new user (id = null)
+echo "   POST /users (new user):\n";
+$postData = new stdClass();
+$postData->user = new stdClass();
+$postData->user->id = null;
+$postData->user->email = 'new@example.com';
+$postData->user->password = 'OptionalPass123';
+
+$dvPost = new DataVerify($postData);
+$dvPost
+    ->field('user')->required->object
+        ->subfield('email')
+            ->email                             // Format checked if present
+            ->when('user.id', '!=', null)
+                ->then->required                // Not required for POST
+        ->subfield('password')
+            ->minLength(12)                     // Format checked if present
+            ->when('user.id', '!=', null)
+                ->then->required;               // Not required for POST
+
+if ($dvPost->verify()) {
+    echo "     ✓ Valid - email and password optional for new users\n";
+} else {
+    echo "     ✗ Validation failed\n";
+}
+
+// PATCH /users/123 - updating existing user (id exists)
+echo "   PATCH /users/123 (update user):\n";
+$patchData = new stdClass();
+$patchData->user = new stdClass();
+$patchData->user->id = 123;
+$patchData->user->email = '';
+$patchData->user->password = '';
+
+$dvPatch = new DataVerify($patchData);
+$dvPatch
+    ->field('user')->required->object
+        ->subfield('email')
+            ->email
+            ->when('user.id', '!=', null)
+                ->then->required                // Required for PATCH
+        ->subfield('password')
+            ->minLength(12)
+            ->when('user.id', '!=', null)
+                ->then->required;               // Required for PATCH
+
+if (!$dvPatch->verify()) {
+    echo "     ✗ Validation failed - email and password required for updates\n";
+} else {
+    echo "     ✓ Validation passed\n";
+}
+echo "\n";
+
+echo "=== End of conditional validation examples ===\n";

@@ -46,4 +46,20 @@ class RequiredTest extends TestCase
         $this->assertFalse($verifier->verify(), 
             'Invalid value should fail validation even without required');
     }
+
+    public function testRequiredAtEndOfChainStillFailsOnMissingField(): void
+    {
+        $data = new stdClass();
+        $verifier = new DataVerify($data);
+
+        $verifier->field('email')->email->required;
+
+        $this->assertFalse(
+            $verifier->verify(),
+            'Missing field must fail when required is at the end of the chain'
+        );
+
+        $errors = $verifier->getErrors();
+        $this->assertEquals('The field email is required', $errors[0]['message']);
+    }
 }
