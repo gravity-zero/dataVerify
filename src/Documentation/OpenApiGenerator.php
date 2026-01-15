@@ -266,6 +266,61 @@ $dv->field(\'vat_number\')
 
 // Operators: =, !=, in, not_in, >, <, >=, <=</code></pre>';
         
+        $html .= '<h2>📦 Reusable Rules</h2>';
+        $html .= '<p>Define validation patterns once and reuse them across fields:</p>';
+        $html .= '<pre><code class="language-php">// Register a reusable rule
+DataVerify::registerRules(\'strongPassword\')
+    ->minLength(12)
+    ->containsUpper
+    ->containsLower
+    ->containsNumber
+    ->containsSpecialCharacter;
+
+// Apply to any field
+$dv->field(\'password\')->required->rule(\'strongPassword\');
+$dv->field(\'confirm_password\')->required->rule(\'strongPassword\');
+
+// Multiple syntaxes available
+$dv->field(\'password\')->rule(\'strongPassword\');       // Method
+$dv->field(\'password\')->rule->strongPassword;          // Property
+$dv->field(\'password\')->rule->strongPassword();        // Property + call
+
+// Chain multiple rules
+$dv->field(\'password\')
+    ->rule(\'strongPassword\')
+    ->rule(\'notCommon\')
+    ->maxLength(128);</code></pre>';
+        
+        $html .= '<h2>🎯 Validation Schemas</h2>';
+        $html .= '<p>Define complete validation structures for APIs and forms:</p>';
+        $html .= '<pre><code class="language-php">// Register a schema with conditional logic
+DataVerify::registerSchema(\'userApi\')
+    ->field(\'user\')->required->object
+        ->subfield(\'email\')
+            ->email
+            ->disposableEmail
+            ->when(\'user.id\', \'!=\', null)
+                ->then->required
+        ->subfield(\'password\')
+            ->minLength(12)
+            ->containsUpper
+            ->containsLower
+            ->when(\'user.id\', \'!=\', null)
+                ->then->required;
+
+// Apply entire schema at once
+$dv = new DataVerify($postData);
+$dv->schema(\'userApi\');  // POST: email/password optional
+
+$dv = new DataVerify($patchData);
+$dv->schema(\'userApi\');  // PATCH: email/password required
+
+// Compose schemas with rules
+DataVerify::registerRules(\'strongPassword\')->minLength(12)->containsUpper;
+DataVerify::registerSchema(\'userForm\')
+    ->field(\'password\')->rule(\'strongPassword\')
+    ->field(\'email\')->required->email;</code></pre>';
+        
         $html .= '<div class="feature-grid">';
         
         $html .= '<div class="feature-card">';

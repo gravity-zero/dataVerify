@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-15
+### Added
+- **Reusable Rules** - Register field-agnostic validation patterns with `DataVerify::registerRules()`
+- **Validation Schemas** - Define complete validation structures with `DataVerify::registerSchema()`
+- Rules support 3 syntaxes: `->rule('ruleName')`, `->rule->ruleName`, `->rule->ruleName()`
+- Schemas support 3 syntaxes: `->schema('schemaName')`, `->schema->schemaName`, `->schema->schemaName()`
+- Schemas support conditional logic and rule composition
+- **Load from directory** - `DataVerify::loadRulesFrom()` and `DataVerify::loadSchemasFrom()` for file-based organization
+- **Auto-discovery from directory** - Load custom validation strategies automatically via `LazyValidationRegistry`
+- Example files for rules and schemas in `/examples` including batch registration and performance patterns
+
+### Changed
+- **Deferred Conditional Evaluation** - Conditional validations now evaluate during `verify()` instead of at definition time for more intuitive rule composition
+
+### Refactored
+- LazyValidationRegistry now auto-discovers validation directories without hardcoded configuration
+- Removed legacy `conditionalValidations` system in favor of unified `allValidations` structure
+- Enhanced OpenAPI documentation with Rules & Schemas sections
+
+### Performance
+- Rules registration: 1.4μs P99 (20 rules: 20.6μs)
+- Schema registration: 4.6μs P99 (10 schemas: 45.9μs)
+- Rules application: 5.9μs P99 (comparable to inline)
+- Schema application: 7.7μs P99 (37% faster than manual!)
+- All validations remain <20μs P99
+
+### Tests
+- Add 2 Unit Test Class for Rules & Schema
+- 616 tests, 1192 assertions, 0 failures
+- Mutation score: 84% 
+
 ## [1.0.5] - 2026-01-06
 ### Tests
 - Restructured test suite into Unit/Integration/Regression hierarchy

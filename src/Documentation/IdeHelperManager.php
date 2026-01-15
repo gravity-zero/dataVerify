@@ -5,10 +5,10 @@ namespace Gravity\Documentation;
 use Gravity\Interfaces\ValidationStrategyInterface;
 
 /**
- * Manages automatic IDE helper generation for custom validation strategies
+ * Manages automatic IDE helper generation for custom validation strategies, rules and schemas
  * 
  * This class handles the opt-in IDE autocompletion feature for development environments.
- * It generates .ide-helper.php files automatically when custom strategies are registered.
+ * It generates .ide-helper.php files automatically when custom strategies, rules or schemas are registered.
  */
 class IdeHelperManager
 {
@@ -98,6 +98,30 @@ class IdeHelperManager
         $this->registeredStrategies[] = $strategy;
         $this->regenerate();
     }
+
+    /**
+     * Notify that a rule was registered and trigger regeneration
+     */
+    public function notifyRuleRegistered(): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+        
+        $this->regenerate();
+    }
+
+    /**
+     * Notify that a schema was registered and trigger regeneration
+     */
+    public function notifySchemaRegistered(): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+        
+        $this->regenerate();
+    }
     
     /**
      * Manually regenerate IDE helper file
@@ -125,10 +149,8 @@ class IdeHelperManager
         
         // Generate with error suppression
         try {
-            return GeneratePHPDoc::writeIdeHelper(
-                $this->outputPath,
-                $this->registeredStrategies
-            );
+            $content = GeneratePHPDoc::generateCompleteIdeHelper($this->registeredStrategies);
+            return $this->writeFile($content);
         } catch (\Throwable $e) {
             // Silent fail - never crash the app for IDE hints
             if (function_exists('error_log')) {
@@ -136,6 +158,30 @@ class IdeHelperManager
             }
             
             return false;
+        }
+    }
+
+    /**
+     * Write content to IDE helper file (thread-safe)
+     */
+    private function writeFile(string $content): bool
+    {
+        $fp = @fopen($this->outputPath, 'c');
+        if ($fp === false) {
+            return false;
+        }
+        
+        try {
+            if (flock($fp, LOCK_EX)) {
+                ftruncate($fp, 0);
+                rewind($fp);
+                $result = fwrite($fp, $content) !== false;
+                flock($fp, LOCK_UN);
+                return $result;
+            }
+            return false;
+        } finally {
+            fclose($fp);
         }
     }
     
@@ -163,5 +209,13 @@ class IdeHelperManager
     public function getOutputPath(): string
     {
         return $this->outputPath;
+    }
+
+    /**
+     * Reset singleton instance (for testing)
+     */
+    public static function reset(): void
+    {
+        self::$instance = null;
     }
 }

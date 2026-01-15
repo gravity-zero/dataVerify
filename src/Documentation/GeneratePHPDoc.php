@@ -365,4 +365,180 @@ STUB,
             fclose($fp);
         }
     }
+
+    /**
+     * Generate IDE helper annotations for registered rules
+     * 
+     * @return array{properties: string[], methods: string[]}
+     */
+    public static function generateRuleAnnotations(): array
+    {
+        $rules = \Gravity\Registry\RuleSetRegistry::instance()->getAll();
+        $properties = [];
+        $methods = [];
+
+        foreach ($rules as $name => $ruleSet) {
+            $validations = $ruleSet->getValidations();
+            $validationNames = array_map(fn($v) => $v['name'], $validations);
+            $description = 'Applies: ' . implode(', ', $validationNames);
+
+            $properties[] = sprintf(
+                ' * @property \Gravity\DataVerify $%s %s',
+                $name,
+                $description
+            );
+            $methods[] = sprintf(
+                ' * @method \Gravity\DataVerify %s() %s',
+                $name,
+                $description
+            );
+        }
+
+        return ['properties' => $properties, 'methods' => $methods];
+    }
+
+    /**
+     * Generate IDE helper annotations for registered schemas
+     * 
+     * @return array{properties: string[], methods: string[]}
+     */
+    public static function generateSchemaAnnotations(): array
+    {
+        $schemas = \Gravity\Registry\SchemaRegistry::instance()->getAll();
+        $properties = [];
+        $methods = [];
+
+        foreach ($schemas as $name => $schema) {
+            $fields = $schema->getFields();
+            $fieldNames = array_map(fn($f) => $f->getName(), $fields);
+            $description = 'Schema with fields: ' . implode(', ', $fieldNames);
+
+            $properties[] = sprintf(
+                ' * @property \Gravity\DataVerify $%s %s',
+                $name,
+                $description
+            );
+            $methods[] = sprintf(
+                ' * @method \Gravity\DataVerify %s() %s',
+                $name,
+                $description
+            );
+        }
+
+        return ['properties' => $properties, 'methods' => $methods];
+    }
+
+    /**
+     * Generate complete IDE helper with strategies, rules and schemas
+     * 
+     * @param array $customStrategies Custom strategies to include
+     * @return string Content of .ide-helper.php
+     */
+    public static function generateCompleteIdeHelper(array $customStrategies = []): string
+    {
+        // Custom strategies methods
+        $strategyMethods = [];
+        foreach ($customStrategies as $strategy) {
+            if (!($strategy instanceof \Gravity\Interfaces\ValidationStrategyInterface)) {
+                continue;
+            }
+
+            $name = $strategy->getName();
+            $reflection = new \ReflectionClass($strategy);
+
+            try {
+                $handlerMethod = $reflection->getMethod('handler');
+                $params = $handlerMethod->getParameters();
+                array_shift($params); // Skip $value
+
+                $paramSignature = [];
+                foreach ($params as $param) {
+                    $type = $param->getType()
+                        ? self::normalizePhpDocType($param->getType())
+                        : 'mixed';
+                    $paramName = $param->getName();
+
+                    if ($param->isOptional()) {
+                        $default = $param->isDefaultValueAvailable()
+                            ? var_export($param->getDefaultValue(), true)
+                            : 'null';
+                        $paramSignature[] = "{$type} \${$paramName} = {$default}";
+                    } else {
+                        $paramSignature[] = "{$type} \${$paramName}";
+                    }
+                }
+
+                $strategyMethods[] = sprintf(
+                    '     * @method DataVerify %s(%s) Custom validation: %s',
+                    $name,
+                    implode(', ', $paramSignature),
+                    $name
+                );
+            } catch (\ReflectionException $e) {
+                $strategyMethods[] = sprintf(
+                    '     * @method DataVerify %s() Custom validation: %s',
+                    $name,
+                    $name
+                );
+            }
+        }
+
+        $strategyBlock = empty($strategyMethods)
+            ? ''
+            : "\n     *\n" . implode("\n", $strategyMethods);
+
+        // Rules annotations
+        $ruleAnnotations = self::generateRuleAnnotations();
+        $rulePropertiesBlock = empty($ruleAnnotations['properties'])
+            ? ''
+            : "\n" . implode("\n", $ruleAnnotations['properties']);
+        $ruleMethodsBlock = empty($ruleAnnotations['methods'])
+            ? ''
+            : "\n" . implode("\n", $ruleAnnotations['methods']);
+
+        // Schemas annotations
+        $schemaAnnotations = self::generateSchemaAnnotations();
+        $schemaPropertiesBlock = empty($schemaAnnotations['properties'])
+            ? ''
+            : "\n" . implode("\n", $schemaAnnotations['properties']);
+        $schemaMethodsBlock = empty($schemaAnnotations['methods'])
+            ? ''
+            : "\n" . implode("\n", $schemaAnnotations['methods']);
+
+        return <<<STUB
+<?php
+/**
+ * IDE Helper for DataVerify Custom Validations, Rules and Schemas
+ * 
+ * This file is generated automatically and should not be edited manually.
+ * It provides autocompletion for custom validation strategies, rules and schemas.
+ * 
+ * @see \Gravity\DataVerify
+ */
+
+namespace Gravity {
+    /**
+     * Custom validation strategies{$strategyBlock}
+     */
+    class DataVerify {}
+}
+
+namespace Gravity\Proxy {
+    /**
+     * Rule proxy for IDE autocompletion
+     * 
+     * Usage: \$dv->field('x')->rule->ruleName{$rulePropertiesBlock}{$ruleMethodsBlock}
+     */
+    class RuleProxy {}
+
+    /**
+     * Schema proxy for IDE autocompletion
+     * 
+     * Usage: \$dv->schema->schemaName{$schemaPropertiesBlock}{$schemaMethodsBlock}
+     */
+    class SchemaProxy {}
+}
+
+STUB;
+    }
 }
