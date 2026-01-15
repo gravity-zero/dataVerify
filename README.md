@@ -84,7 +84,7 @@ if(!$dv->verify()){
 }
 ```
 
-**Custom strategies**
+**Custom validation strategies**
 ```php
 class SiretStrategy extends ValidationStrategy {
     public function getName(): string { return 'siret'; }
@@ -246,13 +246,13 @@ $dv->addTranslations([
 
 - ✅ **Zero dependencies** - Pure PHP 8.1+, no vendor bloat
 - ✅ **Fluent API** - Readable, chainable validations
-- ✅ **Reusable patterns** - Rules & Schemas for DRY validation
-- ✅ **Extensible** - Custom strategies with auto-documentation
-- ✅ **Fast** - ~9μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
+- ✅ **Reusable patterns** - Rules & Schemas for DRY validation with auto-documentation
+- ✅ **Extensible** - Custom validation strategies with auto-documentation
+- ✅ **Fast** - ~9.7μs simple validation, ~2MB memory ([benchmarks](docs/BENCHMARK.md))
 - ✅ **i18n ready** - Built-in translation support (EN, FR)
 - ✅ **Framework agnostic** - Works with WordPress, Laravel, Symfony, vanilla PHP
 - ✅ **Worker-mode ready** - Tested with FrankenPHP, stable memory over 3M+ requests
-- ✅ **Production tested** - 570+ tests, 83% mutation score
+- ✅ **Production tested** - 600+ tests, 84% mutation score
 
 ## Documentation
 
@@ -263,12 +263,15 @@ $dv->addTranslations([
 - [Internationalization](docs/INTERNATIONALIZATION.md) - Multi-language error messages
 - [Error Handling](docs/ERROR_HANDLING.md) - Working with validation errors
 - [Validation Rules](docs/VALIDATIONS.md) - All 30+ built-in rules
+- [Benchmarks](docs/BENCHMARK.md) - Performance metrics
 
 **Examples:**
 - [API Request Validation](examples/api-request.php)
 - [Basic Usage](examples/basic.php)
 - [Conditional Validation](examples/conditional-validation.php)
 - [Custom Validation Rules](examples/custom-validation.php)
+- [Reusable Rules](examples/rules.php)
+- [Validation Schemas](examples/schema.php)
 - [Translation (PHP)](examples/translation-basic.php)
 - [Translation (YAML)](examples/translation-yaml.php)
 
@@ -276,11 +279,11 @@ $dv->addTranslations([
 
 DataVerify is designed for production with predictable sub-millisecond performance:
 ```
-Simple validation:       ~8.7μs   (99% < 9μs)
-Complex nested:          ~16.4μs  (99% < 18μs)
-Batch mode (100 fields): ~0.53ms
-Fail-fast (100 fields):  ~0.23ms  (2.3x faster)
-Memory usage:            ~4.9MB   (stable)
+Simple validation:       ~9.7μs   (99% < 10μs)
+Complex nested:          ~19.1μs  (99% < 20μs)
+Batch mode (100 fields): ~572.9μs
+Fail-fast (100 fields):  ~256.1μs (2.2x faster)
+Memory usage:            ~2MB     (stable)
 ```
 
 **See:** [Full benchmarks](docs/BENCHMARK.md)
