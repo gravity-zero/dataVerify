@@ -1,5 +1,11 @@
 # Custom Validation Strategies
 
+**[← Back to Main Documentation](../README.md)**
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | **Custom Strategies**(CUSTOM_STRATEGIES.md) | [Error Handling](ERROR_HANDLING.md) | [Internationalization](INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+---
+
 Extend DataVerify with your own validation logic through custom strategies.
 
 ## Table of Contents
@@ -17,6 +23,11 @@ Extend DataVerify with your own validation logic through custom strategies.
 
 ## Quick Start
 ```php
+
+use Gravity\DataVerify;
+use Gravity\Interfaces\ValidationStrategyInterface;
+
+
 // 1. Create strategy
 // The #[ValidationRule] attribute enables auto-documentation generation and IDE stub creation (See IDE Autocompletion)
 #[ValidationRule(
@@ -442,3 +453,9 @@ $dv->registerStrategy(ValidationStrategyInterface $strategy): self
 - **[Internationalization](INTERNATIONALIZATION.md)** - Add translations for custom strategies
 - **[Error Handling](ERROR_HANDLING.md)** - Custom error messages for strategies
 - **[Conditional Validation](CONDITIONAL_VALIDATION.md)** - Use strategies with conditions
+
+---
+
+**Navigation:** [Validations](VALIDATIONS.md) | [Conditional Validation](CONDITIONAL_VALIDATION.md) | [Rules & Schemas](RULES_AND_SCHEMAS.md) | [Custom Strategies](CUSTOM_STRATEGIES.md) | [Error Handling](ERROR_HANDLING.md) | [Internationalization](INTERNATIONALIZATION.md) | [Benchmarks](BENCHMARK.md)
+
+**[← Back to Main Documentation](../README.md)**

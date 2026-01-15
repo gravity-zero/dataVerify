@@ -32,17 +32,10 @@ class LazyValidationRegistry
     private const VALIDATION_NAMESPACE = 'Gravity\\Validations\\';
     
     /**
-     * Validation directories to scan (in order of priority)
+     * Cache of available validation directories
+     * @var array<string>|null
      */
-    private const VALIDATION_DIRS = [
-        'Core',
-        'Type',
-        'String',
-        'Numeric',
-        'Date',
-        'File',
-        'Comparison'
-    ];
+    private ?array $validationDirs = null;
     
     /**
      * Get singleton instance
@@ -62,6 +55,41 @@ class LazyValidationRegistry
     private function __construct()
     {
         $this->preloadCore();
+    }
+    
+    /**
+     * Get all validation directories by scanning the filesystem
+     * 
+     * @return array<string>
+     */
+    private function getValidationDirectories(): array
+    {
+        if ($this->validationDirs !== null) {
+            return $this->validationDirs;
+        }
+        
+        $baseDir = dirname(__DIR__) . '/Validations';
+        $dirs = [];
+        
+        if (!is_dir($baseDir)) {
+            return [];
+        }
+        
+        foreach (scandir($baseDir) as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            
+            $path = $baseDir . '/' . $item;
+            
+            if (is_dir($path)) {
+                $dirs[] = $item;
+            }
+        }
+        
+        $this->validationDirs = $dirs;
+        
+        return $dirs;
     }
     
     /**
@@ -126,7 +154,7 @@ class LazyValidationRegistry
         
         $className = ucfirst($name) . 'Validation';
         
-        foreach (self::VALIDATION_DIRS as $dir) {
+        foreach ($this->getValidationDirectories() as $dir) {
             $fullClassName = self::VALIDATION_NAMESPACE . $dir . '\\' . $className;
             
             if (class_exists($fullClassName)) {
@@ -158,7 +186,7 @@ class LazyValidationRegistry
         $validations = [];
         $baseDir = dirname(__DIR__) . '/Validations';
         
-        foreach (self::VALIDATION_DIRS as $dir) {
+        foreach ($this->getValidationDirectories() as $dir) {
             $path = $baseDir . '/' . $dir;
             
             if (!is_dir($path)) {
@@ -232,6 +260,7 @@ class LazyValidationRegistry
     {
         $this->loadedMetadata = [];
         $this->discoveredClasses = [];
+        $this->validationDirs = null;
     }
     
     /**

@@ -3,13 +3,16 @@
 namespace Gravity;
 
 use Gravity\Context\ValidationContext;
-use Gravity\Engine\{ValidationOrchestrator, ConditionalEngine, ErrorManager, DataTraverser};
+use Gravity\Engine\{ValidationOrchestrator, ConditionalEngine, ErrorManager, DataTraverser, RuleEngine, SchemaEngine};
 use Gravity\Exceptions\{ValidationTestNotFoundException, NoActiveFieldException};
 use Gravity\Collections\{FieldCollection, ErrorCollection};
 use Gravity\Handlers\{FieldHandler, SubFieldHandler};
-use Gravity\Interfaces\{DataVerifyInterface, ValidationStrategyInterface, TranslatorInterface};
+use Gravity\Interfaces\{ValidationStrategyInterface, TranslatorInterface};
 use Gravity\Translation\TranslationManager;
-use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidationRegistry, RuleSetRegistry, RuleSetBuilder, RuleSet};
+use Gravity\Registry\{GlobalStrategyRegistry, ValidationRegistry, LazyValidationRegistry, RuleSetRegistry, SchemaRegistry};
+use Gravity\Rules\RuleSetBuilder;
+use Gravity\Schema\SchemaBuilder;
+use Gravity\Proxy\{RuleProxy, SchemaProxy};
 
 /**
  * Class DataVerify
@@ -69,6 +72,8 @@ class DataVerify
     private ConditionalEngine $conditionalEngine;
     private DataTraverser $dataTraverser;
     private LazyValidationRegistry $lazyRegistry;
+    private RuleEngine $ruleEngine;
+    private SchemaEngine $schemaEngine;
 
     /** @param array<string, mixed>|object $data */
     public function __construct(array|object $data)
@@ -95,11 +100,18 @@ class DataVerify
             new ValidationRegistry(),
             $this->lazyRegistry
         );
+
+        $this->ruleEngine = new RuleEngine(
+            RuleSetRegistry::instance()
+        );
+
+        $this->schemaEngine = new SchemaEngine(
+            SchemaRegistry::instance()
+        );
     }
 
     public function field(string $name): self
     {
-        // Finalize conditional block if in then mode
         if ($this->conditionalEngine->isThenMode()) {
             $this->conditionalEngine->finalizeBlock();
         }
@@ -118,6 +130,24 @@ class DataVerify
             throw new \LogicException("Field {$name} was not added to collection");
         }
         
+        return $this;
+    }
+
+    /**
+     * Apply a registered rule set to the current field/subfield
+     * 
+     * @param string $ruleSetName Name of the registered rule set
+     * @throws \LogicException If no active field/subfield or rule set not found
+     */
+    public function applyRules(string $ruleSetName): self
+    {
+        $handler = $this->context->current();
+        if (!$handler) {
+            throw new NoActiveFieldException('applyRules');
+        }
+
+        $this->ruleEngine->apply($handler, $ruleSetName);
+
         return $this;
     }
 
@@ -211,6 +241,18 @@ class DataVerify
             return $this;
         }
 
+        if ($method === 'rule') {
+            $handler = $this->context->current();
+            if (!$handler) {
+                throw new NoActiveFieldException('rule');
+            }
+            return new RuleProxy($this, $handler);
+        }
+
+        if ($method === 'schema') {
+            return new SchemaProxy($this, $this->fields);
+        }
+
         return $this->__call($method, []);
     }
 
@@ -218,6 +260,22 @@ class DataVerify
     {
         if ($method === 'then') {
             $this->conditionalEngine->activateThenMode();
+            return $this;
+        }
+
+        if ($method === 'rule' && count($args) === 1) {
+            $handler = $this->context->current();
+            if (!$handler) {
+                throw new NoActiveFieldException('rule');
+            }
+
+            $this->ruleEngine->apply($handler, $args[0]);
+
+            return $this;
+        }
+
+        if ($method === 'schema' && count($args) === 1) {
+            $this->schemaEngine->apply($this->fields, $args[0]);
             return $this;
         }
 
@@ -237,13 +295,11 @@ class DataVerify
             throw new ValidationTestNotFoundException($method);
         }
 
-        // Get current conditions if in then mode
         $conditions = null;
         if ($this->conditionalEngine->isThenMode()) {
             $conditions = $this->conditionalEngine->getCurrentConditions();
         }
 
-        // Add validation with conditions (will be evaluated during verify())
         $handler->addValidation($method, $args, $conditions);
         
         return $this;
@@ -331,6 +387,85 @@ class DataVerify
     public static function global(): GlobalStrategyRegistry
     {
         return GlobalStrategyRegistry::instance();
+    }
+
+    /**
+     * Register validation schema (complete structure with fields)
+     * 
+     * @param string $name Unique name for this schema
+     * @return SchemaBuilder Fluent builder for defining schema
+     */
+    public static function registerSchema(string $name): SchemaBuilder
+    {
+        return new SchemaBuilder($name);
+    }
+
+    /**
+     * Register reusable validation rules
+     * 
+     * @param string $name Unique name for this rule set
+     * @return RuleSetBuilder Fluent builder for defining rules
+     */
+    public static function registerRules(string $name): RuleSetBuilder
+    {
+        return new RuleSetBuilder($name);
+    }
+
+    /**
+     * Access registered rule sets
+     */
+    public static function rules(): RuleSetRegistry
+    {
+        return RuleSetRegistry::instance();
+    }
+
+    /**
+     * Access registered schemas
+     */
+    public static function schemas(): SchemaRegistry
+    {
+        return SchemaRegistry::instance();
+    }
+
+    /**
+     * Load rules from a directory of PHP files
+     * 
+     * Each file should return a callable that registers the rule:
+     * ```php
+     * // config/rules/strongPassword.php
+     * return fn() => DataVerify::registerRules('strongPassword')
+     *     ->minLength(12)->containsUpper->containsLower;
+     * ```
+     * 
+     * @param string $path Directory containing rule files
+     * @return array<string> List of loaded filenames
+     */
+    public static function loadRulesFrom(string $path): array
+    {
+        return RuleSetRegistry::instance()->loadFromDirectory($path);
+    }
+
+    /**
+     * Load schemas from a directory of PHP classes
+     * 
+     * Each class should implement SchemaConfigInterface:
+     * ```php
+     * // App/Schemas/UserSchema.php
+     * class UserSchema implements SchemaConfigInterface {
+     *     public function getName(): string { return 'user'; }
+     *     public function define(SchemaBuilder $builder): void {
+     *         $builder->field('email')->required->email;
+     *     }
+     * }
+     * ```
+     * 
+     * @param string $path Directory containing schema classes
+     * @param string $namespace Base namespace for the classes
+     * @return array<string> List of loaded schema names
+     */
+    public static function loadSchemasFrom(string $path, string $namespace): array
+    {
+        return SchemaRegistry::instance()->loadFromDirectory($path, $namespace);
     }
 
     public function registerStrategy(ValidationStrategyInterface $strategy): self

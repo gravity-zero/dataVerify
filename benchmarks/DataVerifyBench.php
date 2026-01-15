@@ -496,8 +496,9 @@ class DataVerifyBench
     }
 
     /**
-     * @Revs(1000)
-     * @Iterations(5)
+     * @Revs(2000)
+     * @Iterations(10)
+     * @Warmup(2)
      */
     public function benchDeferredConditionalMultipleBlocks(): void
     {
@@ -615,5 +616,308 @@ class DataVerifyBench
                  ->then->required;                // Conditional with AND
         
         $dv->verify();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchRuleSetRegistration(): void
+    {
+        // Register a rule set (one-time cost)
+        DataVerify::registerRules('benchmark_password')
+            ->minLength(12)
+            ->containsUpper
+            ->containsLower
+            ->containsNumber;
+        
+        // Cleanup for next iteration
+        \Gravity\Registry\RuleSetRegistry::instance()->clear();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchRuleSetApplication(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerRules('benchmark_strong')
+                ->minLength(12)
+                ->containsUpper
+                ->containsLower;
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->password = 'StrongPassword123';
+        
+        $dv = new DataVerify($data);
+        $dv->field('password')->rule('benchmark_strong');
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchRuleSetVsInline(): void
+    {
+        // Inline validation (for comparison)
+        $data = new stdClass();
+        $data->password = 'StrongPassword123';
+        
+        $dv = new DataVerify($data);
+        $dv->field('password')
+            ->minLength(12)
+            ->containsUpper
+            ->containsLower;
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchRuleSetChaining(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerRules('benchmark_base')
+                ->minLength(8)
+                ->containsUpper;
+            DataVerify::registerRules('benchmark_extra')
+                ->containsNumber
+                ->containsSpecialCharacter;
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->password = 'Strong@Pass123';
+        
+        $dv = new DataVerify($data);
+        $dv->field('password')
+            ->rule('benchmark_base')
+            ->rule('benchmark_extra');
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchSchemaRegistration(): void
+    {
+        // Register a schema (one-time cost)
+        DataVerify::registerSchema('benchmark_user')
+            ->field('user')->required->object
+                ->subfield('email')->required->email
+                ->subfield('password')->required->minLength(12);
+        
+        // Cleanup for next iteration
+        \Gravity\Registry\SchemaRegistry::instance()->clear();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchSchemaApplication(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerSchema('benchmark_simple')
+                ->field('user')->required->object
+                    ->subfield('email')->required->email
+                    ->subfield('name')->required->string;
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->email = 'test@example.com';
+        $data->user->name = 'John Doe';
+        
+        $dv = new DataVerify($data);
+        $dv->schema('benchmark_simple');
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchSchemaVsManual(): void
+    {
+        // Manual validation (for comparison)
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->email = 'test@example.com';
+        $data->user->name = 'John Doe';
+        
+        $dv = new DataVerify($data);
+        $dv->field('user')->required->object
+            ->subfield('email')->required->email
+            ->subfield('name')->required->string;
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchSchemaWithRules(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerRules('benchmark_pwd')
+                ->minLength(12)
+                ->containsUpper
+                ->containsLower;
+            
+            DataVerify::registerSchema('benchmark_user_rules')
+                ->field('user')->required->object
+                    ->subfield('email')->required->email
+                    ->subfield('password')->rule('benchmark_pwd');
+            
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->email = 'test@example.com';
+        $data->user->password = 'StrongPassword123';
+        
+        $dv = new DataVerify($data);
+        $dv->schema('benchmark_user_rules');
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchSchemaWithConditionals(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerSchema('benchmark_conditional')
+                ->field('user')->required->object
+                    ->subfield('email')
+                        ->email
+                        ->when('user.id', '!=', null)
+                            ->then->required
+                    ->subfield('password')
+                        ->minLength(12)
+                        ->when('user.id', '!=', null)
+                            ->then->required;
+            
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->user = new stdClass();
+        $data->user->id = 123;
+        $data->user->email = 'test@example.com';
+        $data->user->password = 'StrongPassword123';
+        
+        $dv = new DataVerify($data);
+        $dv->schema('benchmark_conditional');
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(100)
+     * @Iterations(5)
+     */
+    public function benchRuleSetLoadMany(): void
+    {
+        // Simulate loading many rules at startup
+        for ($i = 0; $i < 20; $i++) {
+            DataVerify::registerRules("rule_{$i}")
+                ->minLength(8)
+                ->containsUpper
+                ->containsLower;
+        }
+        
+        // Cleanup for next iteration
+        \Gravity\Registry\RuleSetRegistry::instance()->clear();
+    }
+
+    /**
+     * @Revs(50)
+     * @Iterations(5)
+     */
+    public function benchSchemaLoadMany(): void
+    {
+        // Simulate loading many schemas at startup
+        for ($i = 0; $i < 10; $i++) {
+            DataVerify::registerSchema("schema_{$i}")
+                ->field('user')->required->object
+                    ->subfield('email')->required->email
+                    ->subfield('name')->required->string;
+        }
+        
+        // Cleanup for next iteration
+        \Gravity\Registry\SchemaRegistry::instance()->clear();
+    }
+
+    /**
+     * @Revs(1000)
+     * @Iterations(5)
+     */
+    public function benchMultipleRulesApplication(): void
+    {
+        static $registered = false;
+        if (!$registered) {
+            DataVerify::registerRules('rule1')->minLength(8);
+            DataVerify::registerRules('rule2')->containsUpper;
+            DataVerify::registerRules('rule3')->containsLower;
+            DataVerify::registerRules('rule4')->containsNumber;
+            DataVerify::registerRules('rule5')->containsSpecialCharacter;
+            $registered = true;
+        }
+        
+        $data = new stdClass();
+        $data->password = 'MyP@ssw0rd123';
+        
+        $dv = new DataVerify($data);
+        $dv->field('password')
+            ->rule('rule1')
+            ->rule('rule2')
+            ->rule('rule3')
+            ->rule('rule4')
+            ->rule('rule5');
+        
+        $dv->verify();
+    }
+
+    /**
+     * @Revs(500)
+     * @Iterations(5)
+     */
+    public function benchSchemaLoadAndApply(): void
+    {
+        // Measures full cycle: registration + application
+        DataVerify::registerSchema('load_and_apply')
+            ->field('email')->required->email
+            ->field('name')->required->string->minLength(2)
+            ->field('age')->required->int->between(18, 100);
+        
+        $data = new stdClass();
+        $data->email = 'test@example.com';
+        $data->name = 'John Doe';
+        $data->age = 25;
+        
+        $dv = new DataVerify($data);
+        $dv->schema('load_and_apply');
+        $dv->verify();
+        
+        // Cleanup
+        \Gravity\Registry\SchemaRegistry::instance()->clear();
     }
 }

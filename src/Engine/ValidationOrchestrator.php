@@ -114,30 +114,21 @@ class ValidationOrchestrator
         string $path,
         bool $batchMode
     ): void {
-        // Use new getAllValidations() method that includes conditions
         foreach ($handler->getAllValidations() as $validation) {
-            // Check if validation has conditions
-            if ($validation['conditions'] !== null) {
-                // Evaluate conditions
-                if (!$this->evaluateConditions($validation['conditions'])) {
-                    continue; // Skip this validation
+            if ($validation['conditions'] === null) {
+                $this->executeValidation($handler, $validation['name'], $validation['args'], $value, $path);
+                
+                if ($this->shouldStopValidation($batchMode)) {
+                    $lastError = $this->errors->getLastError();
+                    if ($lastError && $lastError->getField() === $path) {
+                        throw new StopValidationException();
+                    }
                 }
+                continue;
             }
             
-            $this->executeValidation($handler, $validation['name'], $validation['args'], $value, $path);
-            
-            if ($this->shouldStopValidation($batchMode)) {
-                $lastError = $this->errors->getLastError();
-                if ($lastError && $lastError->getField() === $path) {
-                    throw new StopValidationException();
-                }
-            }
-        }
-
-        // Keep old conditional validations for backward compatibility
-        foreach ($handler->getConditionalValidations() as $conditional) {
-            if ($this->shouldExecuteConditional($conditional)) {
-                $this->executeValidation($handler, $conditional->validation, $conditional->args, $value, $path);
+            if ($this->evaluateConditions($validation['conditions'])) {
+                $this->executeValidation($handler, $validation['name'], $validation['args'], $value, $path);
                 
                 if ($this->shouldStopValidation($batchMode)) {
                     $lastError = $this->errors->getLastError();
@@ -188,7 +179,6 @@ class ValidationOrchestrator
         mixed $value,
         string $path
     ): void {
-        // 'required' is special - always execute even on empty values
         if ($test === 'required' || !$this->dataTraverser->isValueEmpty($value)) {
             $result = $this->runValidationTest($test, $value, $args);
             if (!$result) {
@@ -207,40 +197,21 @@ class ValidationOrchestrator
      */
     private function runValidationTest(string $testName, mixed $value, array $args): bool
     {
-        // Try lazy registry first (native validations)
         $metadata = $this->lazyRegistry->get($testName);
         if ($metadata !== null) {
             return ($metadata->callable)($value, ...$args);
         }
         
-        // Try instance registry (instance-specific strategies)
         if ($this->registry->has($testName)) {
             return $this->registry->execute($testName, $value, $args);
         }
         
-        // Try global registry (global strategies)
         $globalMetadata = GlobalStrategyRegistry::instance()->getAllMetadata()[$testName] ?? null;
         if ($globalMetadata !== null) {
             return ($globalMetadata->callable)($value, ...$args);
         }
         
         throw new \InvalidArgumentException("Validation '{$testName}' not found in any registry");
-    }
-
-    /**
-     * Check if conditional validation should execute
-     * 
-     * Delegates to ConditionalEngine for condition evaluation
-     */
-    private function shouldExecuteConditional($conditional): bool
-    {
-        $fieldValue = $this->dataTraverser->getFieldValue($conditional->field);
-        
-        return $this->conditionalEngine->evaluateSingleCondition(
-            $fieldValue,
-            $conditional->operator,
-            $conditional->value
-        );
     }
 
     /**
@@ -285,8 +256,6 @@ class ValidationOrchestrator
      */
     public function getRegistry(): ValidationRegistry
     {
-        // Load all validations from lazy registry into instance registry
-        // This ensures documentation generation has access to all validations
         $allMetadata = $this->lazyRegistry->loadAll();
         
         foreach ($allMetadata as $metadata) {

@@ -10,7 +10,9 @@ mutation:
 	@vendor/bin/infection --threads=4
 
 benchmark:
+	sudo mv /etc/php/8.5/cli/conf.d/20-pcov.ini /etc/php/8.5/cli/conf.d/20-pcov.ini.bak
 	@vendor/bin/phpbench run --report=default --warmup=2 --output=csv > benchmarks/bench_results.csv
+	sudo mv /etc/php/8.5/cli/conf.d/20-pcov.ini.bak /etc/php/8.5/cli/conf.d/20-pcov.ini
 
 p99:
 	@cd benchmarks && php analyze_bench.php

@@ -55,6 +55,35 @@ $dv->field('vat_number')
     ->then->required->regex('/^FR\d{11}$/');
 ```
 
+**Reusable Rules & Schemas**
+```php
+// Register reusable validation rules
+DataVerify::registerRules('strongPassword')
+    ->minLength(12)
+    ->containsUpper
+    ->containsLower
+    ->containsSpecialCharacter;
+
+// Apply to any field
+$dv->field('password')->rule('strongPassword');
+
+// Register complete validation schemas
+DataVerify::registerSchema('userApi')
+    ->field('user')->required->object
+        ->subfield('email')->email
+            ->when('user.id', '!=', null)->then->required
+        ->subfield('password')->rule('strongPassword')
+            ->when('user.id', '!=', null)->then->required;
+
+// Apply entire schema
+$dv = new DataVerify($data); 
+$dv->schema('userApi');
+
+if(!$dv->verify()){
+    // Get Your Errors
+}
+```
+
 **Custom strategies**
 ```php
 class SiretStrategy extends ValidationStrategy {
@@ -217,15 +246,18 @@ $dv->addTranslations([
 
 - ✅ **Zero dependencies** - Pure PHP 8.1+, no vendor bloat
 - ✅ **Fluent API** - Readable, chainable validations
+- ✅ **Reusable patterns** - Rules & Schemas for DRY validation
 - ✅ **Extensible** - Custom strategies with auto-documentation
 - ✅ **Fast** - ~9μs simple validation, ~4.9MB memory ([benchmarks](docs/BENCHMARK.md))
 - ✅ **i18n ready** - Built-in translation support (EN, FR)
 - ✅ **Framework agnostic** - Works with WordPress, Laravel, Symfony, vanilla PHP
-- ✅ **Production tested** - 500+ tests, 83% mutation score
+- ✅ **Worker-mode ready** - Tested with FrankenPHP, stable memory over 3M+ requests
+- ✅ **Production tested** - 570+ tests, 83% mutation score
 
 ## Documentation
 
 **Guides:**
+- [Rules & Schemas](docs/RULES_AND_SCHEMAS.md) - Reusable validation patterns
 - [Conditional Validation](docs/CONDITIONAL_VALIDATION.md) - `when/and/or/then` syntax
 - [Custom Strategies](docs/CUSTOM_STRATEGIES.md) - Extend with your own rules
 - [Internationalization](docs/INTERNATIONALIZATION.md) - Multi-language error messages
